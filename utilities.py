@@ -1,3 +1,8 @@
+"""
+Python wrapper for Lumerical FDTD and MODE
+Author(s): Howard Dao
+"""
+
 import numpy as np
 from os import getcwd, listdir, remove
 from os.path import join
@@ -15,13 +20,13 @@ class LumericalBase():
 
         Parameters:
             file
-                type: str
-                desc: name of the file
+                type: string
+                desc: name of the file to save as
             path
-                type: str
+                type: string
                 desc: name of the destination directory, current directory by default
             overwrite
-                type: bool
+                type: Boolean
                 desc: whether or not to overwrite an existing file with the same name
         """
         files = listdir(path)
@@ -48,6 +53,14 @@ class LumericalBase():
                  material, mesh_order=2, name='rectangle', alpha=1.0):
         """
         Adds a rectangle object in the simulation.
+
+        Parameters:
+            material
+                type: float or string
+                desc: if float, sets material index; if string, sets material to library material
+            mesh_order
+                type: int
+                desc: meshing priority number (lower is higher priority)
         """
         self.lum.addrect()
         self.lum.set('name', name)
@@ -78,6 +91,17 @@ class LumericalBase():
                    radius:float, axis, theta:float, material, mesh_order=2, name='circle', alpha=1.0):
         """
         Adds a cylinder object in the simulation.
+
+        Parameters:
+            radius
+                type: float
+                desc: radius in um
+            material
+                type: float or string
+                desc: if float, sets material index; if string, sets material to library material
+            mesh_order
+                type: int
+                desc: meshing priority number (lower is higher priority)
         """
         self.lum.addcircle()
         self.lum.set('name', name)
@@ -100,6 +124,17 @@ class LumericalBase():
                  points, material, mesh_order=2, name='polygon', alpha=1.0):
         """
         Adds a polygon object in the simulation.
+
+        Parameters:
+            points
+                type: array-like
+                desc: points defining shape of polygon
+            material
+                type: float or string
+                desc: if float, sets material index; if string, sets material to library material
+            mesh_order
+                type: int
+                desc: meshing priority number (lower is higher priority)
         """
         self.lum.addpoly()
         self.lum.set('vertices', points)
@@ -117,7 +152,7 @@ class LumericalBase():
         self.lum.set('mesh order', mesh_order)
 
     def add_mesh(self, x_min:float, x_max:float, y_min:float, y_max:float, z_min:float, z_max:float, 
-                 dx=None, dy=None, dz=None, structure=None, name='Mesh'):
+                 dx=None, dy=None, dz=None, structure=None, name='mesh'):
         """
         Adds a mesh override to a specific area or structure in the simulation.
         """
@@ -188,6 +223,14 @@ class LumericalFDTD(LumericalBase):
                     mesh_accuracy=2, simulation_time=1000e-15):
         """
         Adds a 3D FDTD simulation region.
+
+        Parameters:
+            mesh_accuracy
+                type: int
+                desc: mesh resolution
+            simulation_time
+                type: float
+                desc: maximum duration of a simulation in seconds
         """
         self.lum.addfdtd()
 
@@ -217,6 +260,20 @@ class LumericalFDTD(LumericalBase):
     def set_global_monitors(self, center_wl:float, wl_span:float, use_wl_spacing=True, n_points=21):
         """
         Set global monitor settings.
+
+        Parameters:
+            center_wl
+                type: float
+                desc: center wavelength
+            wl_span
+                type: float
+                desc: wavelength span
+            use_wl_spacing
+                type: Boolean
+                desc: True for equal wavelength intervals, False for equal frequency intervals
+            n_points
+                type: int
+                desc: number of wavelength points
         """
         if use_wl_spacing:
             self.lum.setglobalmonitor('use wavelength spacing', 1)
@@ -259,6 +316,20 @@ class LumericalFDTD(LumericalBase):
                               mode_selection='fundamental mode', n_points=21, name='expansion monitor'):
         """
         Adds a mode expansion monitor in the simulation.
+
+        Parameters:
+            monitor_type
+                type: string
+                desc: orientation of the expansion monitor
+            mode_selection
+                type: string
+                desc: either "fundamental mode" or "user select"
+            n_points
+                type: int
+                desc: number of wavelength points
+            name
+                type: string
+                desc: name of the monitor
         """
         self.lum.addmodeexpansion()
         self.lum.set('name', name)
@@ -303,13 +374,13 @@ class LumericalFDTD(LumericalBase):
 
         Parameters:
             expansion_monitor
-                type: str
+                type: string
                 desc: name of the expansion monitor, must exist in the simulation
             power_monitor
-                type: str
+                type: string
                 desc: name of the DFT monitor, must exist in the simulation
             port
-                type: str
+                type: string
                 desc: name of expansion port from which data is collected
         """
         self.lum.select(expansion_monitor)
@@ -416,7 +487,7 @@ class LumericalMODE(LumericalBase):
                 z_min_bc='Metal', z_max_bc='Metal',
                 solver_type='2D X normal'):
         """
-        Adds a Finite Difference Eigenmode (FDE) solver region in the simulation
+        Adds a Finite Difference Eigenmode (FDE) solver region in the simulation.
         """
         self.lum.addfde()
         self.lum.set('solver type', solver_type)
