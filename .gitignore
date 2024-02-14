@@ -1,0 +1,9 @@
+# ignore .ipynb files
+*.ipynb
+*.pyc
+
+# ignore .mat files
+*.mat
+
+# ignore .npy files
+*.npy

@@ -20,13 +20,13 @@ class LumericalBase():
 
         Parameters:
             file
-                type: string
+                type: str
                 desc: name of the file to save as
             path
-                type: string
+                type: str, optional
                 desc: name of the destination directory, current directory by default
             overwrite
-                type: Boolean
+                type: bool, optional
                 desc: whether or not to overwrite an existing file with the same name
         """
         files = listdir(path)
@@ -38,17 +38,6 @@ class LumericalBase():
         except:
             print('File already exists, not overwriting')
 
-        # if file in files:
-        #     if overwrite:
-        #         print('File already exists, overwriting...')
-        #         remove(join(path, file))
-        #         move(file, path)
-        #     else:
-        #         print('File already exists, not overwriting')
-        # else:
-        #     move(file, path)
-            
-
     def add_rect(self, x_min:float, x_max:float, y_min:float, y_max:float, z_min:float, z_max:float, 
                  material, mesh_order=2, name='rectangle', alpha=1.0):
         """
@@ -56,11 +45,17 @@ class LumericalBase():
 
         Parameters:
             material
-                type: float or string
+                type: float or str
                 desc: if float, sets material index; if string, sets material to library material
             mesh_order
-                type: int
+                type: int, optional
                 desc: meshing priority number (lower is higher priority)
+            name
+                type: str, optional
+                desc: object name
+            alpha
+                type: float, optional
+                desc: object render opacity
         """
         self.lum.addrect()
         self.lum.set('name', name)
@@ -75,10 +70,20 @@ class LumericalBase():
         # If <material> is a string, this sets the object material to a predefined material in Lumerical database.
         # This will fail if <material> is not in the database.
         # If <material> is a float, the object's refractive index is set instead.
-        if isinstance(material, str):
-            self.lum.set('material', material)
-        elif isinstance(material, float):
-            self.lum.set('index', material)
+        # if isinstance(material, str):
+        #     self.lum.set('material', material)
+        # elif isinstance(material, float):
+        #     self.lum.set('index', material)
+        match material:
+            case str():
+                if self.lum.materialexists(material):
+                    self.lum.set('material', material)
+                else:
+                    raise ValueError('Input parameter <material> does not match any material in database.')
+            case int() | float():
+                self.lum.set('index', material)
+            case _:
+                raise TypeError('Input parameter <material> must be either a string, integer, or float.')
 
         # Set the alpha. Affects only the object's appearance in the simulation.
         self.lum.set('alpha', alpha)
@@ -88,20 +93,33 @@ class LumericalBase():
         self.lum.set('mesh order', mesh_order)
 
     def add_circle(self, x:float, y:float, z_min:float, z_max:float, 
-                   radius:float, axis, theta:float, material, mesh_order=2, name='circle', alpha=1.0):
+                   radius:float, axis:str, theta:float,
+                   material, mesh_order=2, name='circle', alpha=1.0):
         """
         Adds a cylinder object in the simulation.
 
         Parameters:
             radius
                 type: float
-                desc: radius in um
+                desc: radius in meters
+            axis
+                type: str
+                desc: axis of rotation ("x", "y", or "z")
+            theta
+                type: float
+                desc: rotation angle in degrees
             material
-                type: float or string
+                type: float or str
                 desc: if float, sets material index; if string, sets material to library material
             mesh_order
-                type: int
+                type: int, optional
                 desc: meshing priority number (lower is higher priority)
+            name
+                type: str, optional
+                desc: object name
+            alpha
+                type: float, optional
+                desc: object render opacity
         """
         self.lum.addcircle()
         self.lum.set('name', name)
@@ -112,10 +130,20 @@ class LumericalBase():
         self.lum.set('radius', radius)
         self.lum.set('first axis', axis)
         self.lum.set('rotation 1', theta)
-        if isinstance(material, str):
-            self.lum.set('material', material)
-        elif isinstance(material, float):
-            self.lum.set('index', material)
+        # if isinstance(material, str):
+        #     self.lum.set('material', material)
+        # elif isinstance(material, float):
+        #     self.lum.set('index', material)
+        match material:
+            case str():
+                if self.lum.materialexists(material):
+                    self.lum.set('material', material)
+                else:
+                    raise ValueError('Input parameter <material> does not match any material in database.')
+            case int() | float():
+                self.lum.set('index', material)
+            case _:
+                raise TypeError('Input parameter <material> must be either a string, integer, or float.')
         self.lum.set('alpha', alpha)
         self.lum.set('override mesh order from material database', 1)
         self.lum.set('mesh order', mesh_order)
@@ -128,13 +156,19 @@ class LumericalBase():
         Parameters:
             points
                 type: array-like
-                desc: points defining shape of polygon
+                desc: points defining polygon shape
             material
-                type: float or string
+                type: float or str
                 desc: if float, sets material index; if string, sets material to library material
             mesh_order
-                type: int
+                type: int, optional
                 desc: meshing priority number (lower is higher priority)
+            name
+                type: str, optional
+                desc: object name
+            alpha
+                type: float, optional
+                desc: object render opacity
         """
         self.lum.addpoly()
         self.lum.set('vertices', points)
@@ -143,10 +177,20 @@ class LumericalBase():
         self.lum.set('y', y)
         self.lum.set('z min', z_min)
         self.lum.set('z max', z_max)
-        if isinstance(material, str):
-            self.lum.set('material', material)
-        elif isinstance(material, float):
-            self.lum.set('index', material)
+        # if isinstance(material, str):
+        #     self.lum.set('material', material)
+        # elif isinstance(material, float):
+        #     self.lum.set('index', material)
+        match material:
+            case str():
+                if self.lum.materialexists(material):
+                    self.lum.set('material', material)
+                else:
+                    raise ValueError('Input parameter <material> does not match any material in database.')
+            case int() | float():
+                self.lum.set('index', material)
+            case _:
+                raise TypeError('Input parameter <material> must be either a string, integer, or float.')
         self.lum.set('alpha', alpha)
         self.lum.set('override mesh order from material database', 1)
         self.lum.set('mesh order', mesh_order)
@@ -155,6 +199,23 @@ class LumericalBase():
                  dx=None, dy=None, dz=None, structure=None, name='mesh'):
         """
         Adds a mesh override to a specific area or structure in the simulation.
+
+        Parameters:
+            dx
+                type: float, optional
+                desc: x discretization in meters
+            dy
+                type: float, optional
+                desc: y discretization in meters
+            dz
+                type: float, optional
+                desc: z discretization in meters
+            structure
+                type: str, optional
+                desc: simulation object on which to apply mesh override
+            name
+                type: str, optional
+                desc: mesh name
         """
         self.lum.addmesh()
         self.lum.set('name', name)
@@ -185,12 +246,18 @@ class LumericalBase():
             self.lum.set('override z mesh', 1)
             self.lum.set('dz', dz)
 
-
-
     def add_index_monitor(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, 
                           monitor_type='2D Z-normal', name='index monitor'):
         """
         Adds an index monitor.
+
+        Parameters:
+            monitor_type
+                type: str, optional
+                desc: monitor orientation
+            name
+                type: str, optional
+                desc: monitor name
         """
         self.lum.addindex()
         self.lum.set('name', name)
@@ -215,8 +282,11 @@ class LumericalBase():
             self.lum.set('z', z)
 
 class LumericalFDTD(LumericalBase):
-    def __init__(self, fdtd) -> None:
-        super().__init__(lum=fdtd)
+    """
+    Class for FDTD simulation.
+    """
+    def __init__(self, lum) -> None:
+        super().__init__(lum)
 
     def add_fdtd_3D(self, x_min:float, x_max:float, y_min:float, y_max:float, z_min:float, z_max:float, 
                     x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='PML', z_max_bc='PML',
@@ -226,10 +296,10 @@ class LumericalFDTD(LumericalBase):
 
         Parameters:
             mesh_accuracy
-                type: int
+                type: int, optional
                 desc: mesh resolution
             simulation_time
-                type: float
+                type: float, optional
                 desc: maximum duration of a simulation in seconds
         """
         self.lum.addfdtd()
@@ -264,12 +334,12 @@ class LumericalFDTD(LumericalBase):
         Parameters:
             center_wl
                 type: float
-                desc: center wavelength
+                desc: center wavelength in meters
             wl_span
                 type: float
-                desc: wavelength span
+                desc: wavelength span in meters
             use_wl_spacing
-                type: Boolean
+                type: bool, optional
                 desc: True for equal wavelength intervals, False for equal frequency intervals
             n_points
                 type: int
@@ -288,6 +358,14 @@ class LumericalFDTD(LumericalBase):
                           monitor_type='2D Z-normal', name='power monitor'):
         """
         Adds a field and power monitor in the simulation.
+
+        Parameters:
+            monitor_type
+                type: str, optional
+                desc: monitor orientation
+            name
+                type: str, optional
+                desc: monitor name
         """
         self.lum.addpower()
         self.lum.set('name', name)
@@ -319,17 +397,17 @@ class LumericalFDTD(LumericalBase):
 
         Parameters:
             monitor_type
-                type: string
-                desc: orientation of the expansion monitor
+                type: str
+                desc: monitor orientation
             mode_selection
-                type: string
+                type: str
                 desc: either "fundamental mode" or "user select"
             n_points
                 type: int
                 desc: number of wavelength points
             name
-                type: string
-                desc: name of the monitor
+                type: str, optional
+                desc: monitor name
         """
         self.lum.addmodeexpansion()
         self.lum.set('name', name)
@@ -374,13 +452,13 @@ class LumericalFDTD(LumericalBase):
 
         Parameters:
             expansion_monitor
-                type: string
+                type: str
                 desc: name of the expansion monitor, must exist in the simulation
             power_monitor
-                type: string
+                type: str
                 desc: name of the DFT monitor, must exist in the simulation
             port
-                type: string
+                type: str, optional
                 desc: name of expansion port from which data is collected
         """
         self.lum.select(expansion_monitor)
@@ -390,6 +468,14 @@ class LumericalFDTD(LumericalBase):
                           monitor_type='2D Z-normal', name='movie monitor'):
         """
         Adds a movie monitor in the simulation.
+
+        Parameters:
+            monitor_type
+                type: str, optional
+                desc: monitor orientation
+            name
+                type: str, optional
+                desc: monitor name
         """
         self.lum.addmovie()
         self.lum.set('name', name)
@@ -418,6 +504,20 @@ class LumericalFDTD(LumericalBase):
         """
         Adds a mode source in the simulation. Depending on the injection axis, 
         the span along that axis will be disabled.
+
+        Parameters:
+            center_wl
+                type: float
+                desc: center wavelength in meters
+            wl_span
+                type: float
+                desc: wavelength span in meters
+            axis
+                type: str
+                desc: propagation axis ("x-axis", "y-axis", or "z_axis")
+            direction
+                type: str, optional
+                desc: "forward" or "backward"
         """
         self.fdtd.addmode()
         self.fdtd.set('injection axis', axis)
@@ -447,6 +547,23 @@ class LumericalFDTD(LumericalBase):
                          radius:float, center_wl:float, wl_span:float, axis='x', direction='forward'):
         """
         Adds a Gaussian source in the simulation. Uses waist radius.
+
+        Parameters:
+            radius
+                type: float
+                desc: waist radius in meters
+            center_wl
+                type: float
+                desc: center wavelength in meters
+            wl_span
+                type: float
+                desc: wavelength span in meters
+            axis
+                type: str
+                desc: propagation axis ("x", "y", or "z")
+            direction
+                type: str, optional
+                desc: "forward" or "backward"
         """
         self.lum.addgaussian()
         self.lum.set('injection axis', axis)
@@ -478,8 +595,11 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('distance from waist', 0)
     
 class LumericalMODE(LumericalBase):
-    def __init__(self, mode) -> None:
-        super().__init__(lum=mode)
+    """
+    Class for FDE, EME, and varFDTD simulations.
+    """
+    def __init__(self, lum) -> None:
+        super().__init__(lum)
 
     def add_fde(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float,
                 x_min_bc='Metal', x_max_bc='Metal',
@@ -533,3 +653,17 @@ class LumericalMODE(LumericalBase):
         self.lum.set('y span', y_span)
         self.lum.set('z', z)
         self.lum.set('z span', z_span)
+
+class LumericalHEAT(LumericalBase):
+    """
+    Class for HEAT simulations.
+    """
+    def __init__(self, lum) -> None:
+        super().__init__(lum)
+
+class LumericalCHARGE(LumericalBase):
+    """
+    Class for CHARGE simulations.
+    """
+    def __init__(self, lum) -> None:
+        super().__init__(lum)
