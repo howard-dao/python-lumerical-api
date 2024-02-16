@@ -5,20 +5,17 @@ def linear_taper(w0:float, w1:float, length:float):
     Generates vertices for linear taper in clockwise order.
 
     Parameters:
-        w0
-            type: float
-            desc: width of one end of the taper
-        w1
-            type: float
-            desc: width of the other end of the taper
-        length
-            type: float
-            desc: distance between both ends of the taper
+        w0 : float
+            Width of one end of the taper.
+        w1 : float
+            Width of the other end of the taper.
+        length : float
+            Distance between both ends of the taper.
 
     Returns:
-        points
-            type: [N-by-2] ndarray
-            desc: vertices of the linear taper in clockwise order
+        points : [N-by-2] ndarray
+            Vertices of the linear taper in clockwise order,
+            starting from the top left vertex.
     """
     x = [0, length, length, 0]
     y = [w0/2, w1/2, -w1/2, -w0/2]
@@ -33,23 +30,19 @@ def parabolic_taper(w0:float, w1:float, length:float, n_points=100):
     Generates vertices for parabolic taper in clockwise order.
 
     Parameters:
-        w0
-            type: float
-            desc: width of one end of the taper
-        w1
-            type: float
-            desc: width of the other end of the taper
-        length
-            type: float
-            desc: distance between both ends of the taper
-        n_points
-            type: int
-            desc: number of points with which to draw one side of the taper
+        w0 : float
+            Width of one end of the taper.
+        w1 : float
+            Width of the other end of the taper.
+        length : float
+            Distance between both ends of the taper.
+        n_points : int
+            Number of points with which to draw one side of the taper.
 
     Returns:
-        points
-            type: [N-by-2] ndarray
-            desc: vertices of the parabolic taper in clockwise order
+        points : [N-by-2] ndarray
+            Vertices of the parabolic taper in clockwise order,
+            starting from the top left vertex.
     """
     a = 4 * length / (w1**2 - w0**2)
     c = a * w0**2 / 4
