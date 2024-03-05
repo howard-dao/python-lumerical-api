@@ -8,7 +8,6 @@ from os import getcwd, listdir, remove
 from os.path import join
 from shutil import move
 
-
 class LumericalBase():
     def __init__(self, lum) -> None:
         self.lum = lum
@@ -34,6 +33,30 @@ class LumericalBase():
             move(file, path)
         except:
             print('File already exists, not overwriting')
+    
+    def _match_material(self, material):
+        """
+        Matches the given material to Lumerical's database and assigns it to the object.
+        If a number, set the material's refractive index instead.
+
+        Parameters:
+            material : float or str
+                Name or refractive index of the material.
+        
+        Raises:
+            ValueError: <material> does not match any material in database.
+            TypeError: <material> is neither a float or string.
+        """
+        match material:
+            case str():
+                if self.lum.materialexists(material):
+                    self.lum.set('material', material)
+                else:
+                    raise ValueError('Input parameter <material> does not match any material in database.')
+            case int() | float():
+                self.lum.set('index', material)
+            case _:
+                raise TypeError('Input parameter <material> must be either a string, integer, or float.')
 
     def add_rect(self, x_min:float, x_max:float, y_min:float, y_max:float, z_min:float, z_max:float, 
                  material, mesh_order=2, name='rectangle', alpha=0.5):
@@ -59,29 +82,8 @@ class LumericalBase():
         self.lum.set('z min', z_min)
         self.lum.set('z max', z_max)
 
-        # Set the material.
-        # If <material> is a string, this sets the object material to a predefined material in Lumerical database.
-        # This will fail if <material> is not in the database.
-        # If <material> is a float, the object's refractive index is set instead.
-        # if isinstance(material, str):
-        #     self.lum.set('material', material)
-        # elif isinstance(material, float):
-        #     self.lum.set('index', material)
-        match material:
-            case str():
-                if self.lum.materialexists(material):
-                    self.lum.set('material', material)
-                else:
-                    raise ValueError('Input parameter <material> does not match any material in database.')
-            case int() | float():
-                self.lum.set('index', material)
-            case _:
-                raise TypeError('Input parameter <material> must be either a string, integer, or float.')
-
-        # Set the alpha. Affects only the object's appearance in the simulation.
+        self._match_material(material=material)
         self.lum.set('alpha', alpha)
-
-        # Set mesh order. By default, it is 2.
         self.lum.set('override mesh order from material database', 1)
         self.lum.set('mesh order', mesh_order)
 
@@ -116,20 +118,44 @@ class LumericalBase():
         self.lum.set('radius', radius)
         self.lum.set('first axis', axis)
         self.lum.set('rotation 1', theta)
-        # if isinstance(material, str):
-        #     self.lum.set('material', material)
-        # elif isinstance(material, float):
-        #     self.lum.set('index', material)
-        match material:
-            case str():
-                if self.lum.materialexists(material):
-                    self.lum.set('material', material)
-                else:
-                    raise ValueError('Input parameter <material> does not match any material in database.')
-            case int() | float():
-                self.lum.set('index', material)
-            case _:
-                raise TypeError('Input parameter <material> must be either a string, integer, or float.')
+
+        self._match_material(material=material)
+        self.lum.set('alpha', alpha)
+        self.lum.set('override mesh order from material database', 1)
+        self.lum.set('mesh order', mesh_order)
+
+    def add_ring(self, x:float, y:float, z_min:float, z_max:float,
+                 r_out:float, r_in:float, material, mesh_order=2, name='ring', alpha=0.5):
+        """
+        Adds a ring object in the simulation.
+
+        Parameters:
+            r_out : float
+                Outer radius in meters.
+            r_in : float
+                Inner radius in meters.
+            material : float or str
+                If float, sets material index; if string, sets material to library material.
+            mesh_order : int, optional
+                Priority number with which to draw the object. Lower means higher priority.
+            name : str, optional
+                Object name.
+            alpha : float, optional
+                Object render opacity.
+        """
+        self.lum.addring()
+        self.lum.set('name', name)
+        self.lum.set('x', x)
+        self.lum.set('y', y)
+        self.lum.set('z min', z_min)
+        self.lum.set('z max', z_max)
+
+        if r_out <= r_in:
+            raise ValueError('Input argument <r_out> must be greater than <r_in>.')
+        self.lum.set('outer radius', r_out)
+        self.lum.set('inner radius', r_in)
+
+        self._match_material(material=material)
         self.lum.set('alpha', alpha)
         self.lum.set('override mesh order from material database', 1)
         self.lum.set('mesh order', mesh_order)
@@ -158,20 +184,8 @@ class LumericalBase():
         self.lum.set('y', y)
         self.lum.set('z min', z_min)
         self.lum.set('z max', z_max)
-        # if isinstance(material, str):
-        #     self.lum.set('material', material)
-        # elif isinstance(material, float):
-        #     self.lum.set('index', material)
-        match material:
-            case str():
-                if self.lum.materialexists(material):
-                    self.lum.set('material', material)
-                else:
-                    raise ValueError('Input parameter <material> does not match any material in database.')
-            case int() | float():
-                self.lum.set('index', material)
-            case _:
-                raise TypeError('Input parameter <material> must be either a string, integer, or float.')
+
+        self._match_material(material=material)
         self.lum.set('alpha', alpha)
         self.lum.set('override mesh order from material database', 1)
         self.lum.set('mesh order', mesh_order)
@@ -508,7 +522,7 @@ class LumericalFDTD(LumericalBase):
                 Center wavelength in meters.
             wl_span : float
                 Wavelength span in meters.
-            axis : str
+            axis : str, optional
                 Propagation axis ("x", "y", or "z").
             direction : str, optional
                 Either "forward" or "backward".
@@ -534,7 +548,7 @@ class LumericalFDTD(LumericalBase):
             self.lum.set('y', y)
             self.lum.set('y span', y_span)
             self.lum.set('z', z)
-            
+        
         self.lum.set('center wavelength', center_wl)
         self.lum.set('wavelength span', wl_span)
 
@@ -591,20 +605,59 @@ class LumericalMODE(LumericalBase):
             self.lum.set('y max bc', y_max_bc)
 
     def add_eme(self, x_min:float, y_min:float, y_max:float, z_min:float, z_max:float,
-                wl:float, temperature=300,
+                wl:float, groups=None, temperature=300, solver_type='3D: X Prop',
                 x_min_bc='Metal', x_max_bc='Metal',
                 y_min_bc='Metal', y_max_bc='Metal',
-                z_min_bc='Metal', z_max_bc='Metal',
-                solver_type='3D: X Prop'):
+                z_min_bc='Metal', z_max_bc='Metal'):
         """
-        Adds an Eigenmode Expansion (EME) solver region in the simulation
+        Adds an Eigenmode Expansion (EME) solver region in the simulation.
+
+        Parameters:
+            wl : float
+                Simulation wavelength in meters.
+            groups : [N-by-3] array-like
+                Array containing information about each EME group. Each row represents a group.
+                The first column represents group spans in the x direction.
+                The second column represents the number of cells.
+                The third column represents the subcell method. 0 for none and 1 for CVCS.
+            temperature : float, optional
+                Simulation temperature in Kelvin.
+            solver_type : str, optional
+                Either '3D: X Prop', 
+        
+        Raises:
+            ValueError: <groups> has the wrong dimensions.
         """
         self.lum.addeme()
+        self.lum.set('simulation temperature', temperature)
+        self.lum.set('solver type', solver_type)
+
+        groups = np.array(groups)
+        if groups.shape[0] >= 1:
+            self.lum.set('number of cell groups', groups.shape[0])
+        else:
+            raise ValueError('Input parameter <groups> must have at least 1 row.')
+        if groups.shape[1] == 3:
+            self.lum.set('group spans', groups[:,0])
+            self.lum.set('cells', groups[:,1])
+            self.lum.set('subcell method', groups[:,2])
+        else:
+            raise ValueError('Input parameter <groups> must have 3 columns.')
+
+        # EME region
         self.lum.set('x min', x_min)
         self.lum.set('y min', y_min)
         self.lum.set('y max', y_max)
         self.lum.set('z min', z_min)
         self.lum.set('z max', z_max)
+
+        # Boundary conditions
+        # self.lum.set('x min bc', x_min_bc)
+        # self.lum.set('x max bc', x_max_bc)
+        self.lum.set('y min bc', y_min_bc)
+        self.lum.set('y max bc', y_max_bc)
+        self.lum.set('z min bc', z_min_bc)
+        self.lum.set('z max bc', z_max_bc)
 
 class LumericalHEAT(LumericalBase):
     """
