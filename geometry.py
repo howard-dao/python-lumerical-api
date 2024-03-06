@@ -127,8 +127,53 @@ def parabolic_taper(w0:float, w1:float, length:float, n_points=100):
     
     return points
 
-def circular_arc(width:float, radius:float, theta:float, n_points=100):
+def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, n_points=100):
     """
-    Generates a circular path 
-    """
+    Generates a circular arc path.
     
+    Parameters:
+        width : float
+            Arc width.
+        radius : float
+            Arc center radius.
+        angle_range : float
+            Arc angular range in degrees.
+        angle_start : float, optional
+            Arc start angle in degrees.
+        n_points : int, optional
+            Number of points.
+
+    Returns:
+        points : [N-by-2] ndarray
+
+    Raises:
+        ValueError: Width is larger than the diameter.
+        ValueError: Angular range is zero, negative, or greater than 360.
+    """
+    inner_radius = radius - width/2
+    outer_radius = radius + width/2
+
+    if inner_radius <= 0:
+        raise ValueError(
+            'Input parameter <width> must be less than 2*<radius>.')
+    if angle_range <= 0 or angle_range > 360:
+        raise ValueError(
+            'Input parameter <angle_range> must be between 0 and 360.')
+    if angle_start >= 360:
+        angle_start = angle_start % 360
+
+    theta = np.linspace(angle_start, angle_start+angle_range, round(n_points/2))
+    theta = theta * np.pi / 180
+    x_inner = inner_radius * np.cos(theta)
+    y_inner = inner_radius * np.sin(theta)
+
+    x_outer = outer_radius * np.cos(theta)
+    y_outer = outer_radius * np.sin(theta)
+
+    points_inner = [(xp, yp) for xp, yp in zip(x_inner, y_inner)]
+    points_outer = [(xp, yp) for xp, yp in zip(x_outer, y_outer)]
+    points_outer = list(reversed(points_outer))
+
+    points = np.array(points_inner + points_outer)
+
+    return points
