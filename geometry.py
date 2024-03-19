@@ -1,6 +1,24 @@
 import numpy as np
 import copy
 
+def translate(points, dx:float, dy:float):
+    """
+    Translates vertices along either x and y directions.
+
+    Parameters:
+        points : [N-by-2] ndarray
+            Vertices of the shape.
+        dx : float
+            Distance along x.
+        dy : float
+            Distance along y.
+    """
+    new_points = copy.copy(points)
+    new_points[:,0] += dx
+    new_points[:,1] += dy
+
+    return new_points
+
 def reflect_x(points):
     """
     Flips the vertices in the x-direction (reflection w/ respect to y-axis)
@@ -127,7 +145,7 @@ def parabolic_taper(w0:float, w1:float, length:float, n_points=100):
     
     return points
 
-def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, n_points=100):
+def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, direction='counterclockwise',  n_points=100):
     """
     Generates a circular arc path.
     
@@ -140,6 +158,8 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, n_
             Arc angular range in degrees.
         angle_start : float, optional
             Arc start angle in degrees.
+        direction : str, optional
+            Direction of the arc from starting point.
         n_points : int, optional
             Number of points.
 
@@ -147,8 +167,9 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, n_
         points : [N-by-2] ndarray
 
     Raises:
-        ValueError: Width is larger than the diameter.
-        ValueError: Angular range is zero, negative, or greater than 360.
+        ValueError: <width> is larger than the diameter.
+        ValueError: <angle_range> is zero, negative, or greater than 360.
+        ValueError: <direction> is neither 'clockwise' or 'counterclockwise'.
     """
     inner_radius = radius - width/2
     outer_radius = radius + width/2
@@ -161,13 +182,16 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, n_
             'Input parameter <angle_range> must be between 0 and 360.')
     if angle_start >= 360:
         angle_start = angle_start % 360
+    if direction != 'clockwise' and direction != 'counterclockwise':
+        raise ValueError(
+            'Input parameter <direction> must be either "clockwise" or "counterclockwise".')
 
     theta = np.linspace(angle_start, angle_start+angle_range, round(n_points/2))
     theta = theta * np.pi / 180
-    x_inner = inner_radius * np.cos(theta)
+    x_inner = inner_radius * np.cos(theta) - radius
     y_inner = inner_radius * np.sin(theta)
 
-    x_outer = outer_radius * np.cos(theta)
+    x_outer = outer_radius * np.cos(theta) - radius
     y_outer = outer_radius * np.sin(theta)
 
     points_inner = [(xp, yp) for xp, yp in zip(x_inner, y_inner)]
@@ -175,5 +199,8 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, n_
     points_outer = list(reversed(points_outer))
 
     points = np.array(points_inner + points_outer)
+
+    if direction == 'clockwise':
+        points = reflect_x(points)
 
     return points
