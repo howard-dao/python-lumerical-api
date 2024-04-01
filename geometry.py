@@ -1,13 +1,14 @@
 import numpy as np
+from scipy.integrate import odeint
 import copy
 
-def _translate(points, dx:float, dy:float):
+def _translate(points:np.ndarray, dx:float, dy:float):
     """
     Translates vertices along either x and y directions.
 
     Parameters:
         points : [N-by-2] ndarray
-            Vertices of the shape.
+            Shape vertices.
         dx : float
             Distance along x.
         dy : float
@@ -22,11 +23,13 @@ def _translate(points, dx:float, dy:float):
 
     return new_points
 
-def reflect(points, angle:float):
+def _reflect(points:np.ndarray, angle:float):
     """
     Reflects vertices with respect to a given angle.
 
     Parameters:
+        points : [N-by-2] ndarray
+            Shape vertices.
         angle : float
             Angle over which to reflect vertices in degrees.
 
@@ -40,13 +43,13 @@ def reflect(points, angle:float):
 
     return new_points
 
-def rotate(points, angle:float, origin=[0,0], unit='deg'):
+def _rotate(points:np.ndarray, angle:float, origin=[0,0], unit='deg'):
     """
     Rotates a shape counterclockwise about an origin point.
 
     Parameters:
         points : [N-by-2] ndarray
-            Vertices of the shape.
+            Shape vertices.
         angle : float
             Angle of rotation.
         origin : [1-by-2] array-like
@@ -90,8 +93,7 @@ def linear_taper(w0:float, w1:float, length:float):
     x = [0, length, length, 0]
     y = [w0/2, w1/2, -w1/2, -w0/2]
 
-    points = [(x,y) for x, y in zip(x, y)]
-    points = np.array(points)
+    points = np.transpose(np.vstack((x,y)))
 
     return points
 
@@ -117,7 +119,7 @@ def parabolic_taper(w0:float, w1:float, length:float, n_points=100):
     c = a * w0**2 / 4
 
     x = np.linspace(0, length, n_points)
-    y = ((x + c) / a) ** 0.5
+    y = np.sqrt((x + c) / a)
 
     # Concatenate top and bottom points
     points_top = [(xp, yp) for xp, yp in zip(x, y)]
@@ -192,7 +194,7 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, di
     points = _translate(points=points, dx=-dx, dy=-dy)
 
     if direction == 'clockwise':
-        points = reflect(points=points, angle=angle_start)
+        points = _reflect(points=points, angle=angle_start)
 
     return points
 
@@ -206,8 +208,9 @@ def circular_s_bend(width:float, radius:float, span:float, n_points=100):
         radius : float
             Arc center radius of curvature.
         span : float
-
+            Lateral distance.
         n_points : int, optional
+            Number of points.
     """
     theta1 = np.rad2deg(np.arccos(np.sqrt((radius*span - span**2/4)/radius**2)))
     angle_range = 90 - theta1
@@ -233,5 +236,58 @@ def circular_s_bend(width:float, radius:float, span:float, n_points=100):
     points2 = _translate(points2, dx=length/2, dy=-span/2)
 
     points = np.vstack((points1, points2))
+
+    return points
+
+def _clothoid_ode_rhs(state, t, kappa0, kappa1):
+    x, y, theta = state[0], state[1], state[2]
+    return np.array([np.cos(theta), np.sin(theta), kappa0 + kappa1*t])
+
+def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, direction='counterclockwise', n_points=100):
+    """
+    Generates an Euler (aka clothoidal) arc path.
+
+    Parameters:
+        width : float
+        min_radius : float
+        angle_range : float
+        angle_start : float, optional
+        direction : str, optional
+        n_points : int, optional
+    """
+    if min_radius <= width/2:
+        raise ValueError('Input parameter <width> must be less than 2*<min_radius>.')
+    if direction != 'clockwise' and direction != 'counterclockwise':
+        raise ValueError(
+            'Input parameter <direction> must be either "clockwise" or "counterclockwise".')
+
+    x0, y0, theta0 = 0, 0, np.deg2rad(angle_start)
+    thetas = np.deg2rad(angle_range)
+    L = 2 * min_radius * thetas
+    t = np.linspace(0, L, n_points)
+    kappa0 = 0
+    kappa1 = 2 * thetas / L**2
+
+    sol = odeint(func=_clothoid_ode_rhs, 
+                 y0=np.array([x0,y0,theta0]), 
+                 t=t, 
+                 args=(kappa0,kappa1))
+
+    x, y, theta = sol[:,0], sol[:,1], sol[:,2]
+
+    x_inner = x + (width/2)*np.cos(theta + np.pi/2)
+    y_inner = y + (width/2)*np.sin(theta + np.pi/2)
+
+    x_outer = x + (width/2)*np.cos(theta - np.pi/2)
+    y_outer = y + (width/2)*np.sin(theta - np.pi/2)
+
+    x = np.hstack((x_inner, x_outer[::-1]))
+    y = np.hstack((y_inner, y_outer[::-1]))
+    
+    # points = np.array([(xp, yp) for xp, yp in zip(x, y)])
+    points = np.transpose(np.vstack((x,y)))
+
+    if direction == 'clockwise':
+        points = _reflect(points=points, angle=angle_start)
 
     return points
