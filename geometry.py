@@ -1,3 +1,8 @@
+"""
+Python module containing various shapes for photonic paths.
+Author(s): Howard Dao
+"""
+
 import numpy as np
 from scipy.integrate import odeint
 import copy
@@ -216,6 +221,9 @@ def circular_s_bend(width:float, radius:float, span:float, reflect=False, angle=
         n_points : int, optional
             Number of points.
     """
+    if n_points % 2 != 0:
+        n_points += 1
+
     theta1 = np.rad2deg(np.arccos(np.sqrt((radius*span - span**2/4)/radius**2)))
     angle_range = 90 - theta1
 
@@ -225,21 +233,22 @@ def circular_s_bend(width:float, radius:float, span:float, reflect=False, angle=
         angle_range=angle_range, 
         angle_start=0, 
         direction='clockwise', 
-        n_points=n_points/2)
+        n_points=n_points)
     points2 = circular_arc(
         width=width, 
         radius=radius, 
         angle_range=angle_range, 
         angle_start=-angle_range, 
         direction='counterclockwise', 
-        n_points=n_points/2)
+        n_points=n_points)
     
     # Align the second arc with the first arc.
-    theta2 = np.deg2rad(90-angle_range)
+    theta2 = np.deg2rad(90 - angle_range)
     length = 2 * radius * np.sqrt(1 - np.sin(theta2)**2)
     points2 = _translate(points2, dx=length/2, dy=-span/2)
 
-    points = np.vstack((points1, points2))
+    idx = int(n_points/2)
+    points = np.vstack((points1[:idx], points2[::-1], points1[idx:]))
 
     if reflect:
         points = _reflect(points, angle=0)
