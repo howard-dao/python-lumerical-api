@@ -198,17 +198,21 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, di
 
     return points
 
-def circular_s_bend(width:float, radius:float, span:float, n_points=100):
+def circular_s_bend(width:float, radius:float, span:float, reflect=False, angle=0, n_points=100):
     """
     Generates a circular S-bend.
 
     Parameters:
         width : float
-            Arc width.
+            Path width.
         radius : float
             Arc center radius of curvature.
         span : float
             Lateral distance.
+        reflect : bool, optional
+            Whether to reflect over longitudinal axis.
+        angle : float, optional
+            Longitudinal angular direction in degrees.
         n_points : int, optional
             Number of points.
     """
@@ -237,6 +241,12 @@ def circular_s_bend(width:float, radius:float, span:float, n_points=100):
 
     points = np.vstack((points1, points2))
 
+    if reflect:
+        points = _reflect(points, angle=0)
+
+    if angle != 0:
+        points = _rotate(points, angle=angle)
+
     return points
 
 def _clothoid_ode_rhs(state, t, kappa0, kappa1):
@@ -249,11 +259,17 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, d
 
     Parameters:
         width : float
+            Arc width.
         min_radius : float
+            Minimum radius of curvature.
         angle_range : float
+            Arc angular range in degrees.
         angle_start : float, optional
+            Arc start angle in degrees. Zero degrees points to the +x direction.
         direction : str, optional
+            Direction of the arc from starting point.
         n_points : int, optional
+            Number of points.
     """
     if min_radius <= width/2:
         raise ValueError('Input parameter <width> must be less than 2*<min_radius>.')
