@@ -58,8 +58,7 @@ class LumericalBase():
             case _:
                 raise TypeError('Input parameter <material> must be either a string, integer, or float.')
 
-    def add_rect(self, x_min:float, x_max:float, y_min:float, y_max:float, z_min:float, z_max:float, 
-                 material, mesh_order=2, name='rectangle', alpha=0.5):
+    def add_rect(self, x_min:float, x_max:float, y_min:float, y_max:float, z_min:float, z_max:float, material, mesh_order=2, name='rectangle', alpha=0.5):
         """
         Adds a rectangle object in the simulation.
 
@@ -88,8 +87,7 @@ class LumericalBase():
         self.lum.set('mesh order', mesh_order)
 
     def add_circle(self, x:float, y:float, z_min:float, z_max:float, 
-                   radius:float, axis:str, theta:float,
-                   material, mesh_order=2, name='circle', alpha=0.5):
+                   radius:float, axis:str, theta:float, material, mesh_order=2, name='circle', alpha=0.5):
         """
         Adds a cylinder object in the simulation.
 
@@ -124,8 +122,7 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', 1)
         self.lum.set('mesh order', mesh_order)
 
-    def add_ring(self, x:float, y:float, z_min:float, z_max:float,
-                 r_out:float, r_in:float, material, mesh_order=2, name='ring', alpha=0.5):
+    def add_ring(self, x:float, y:float, z_min:float, z_max:float, r_out:float, r_in:float, material, mesh_order=2, name='ring', alpha=0.5):
         """
         Adds a ring object in the simulation.
 
@@ -160,8 +157,7 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', 1)
         self.lum.set('mesh order', mesh_order)
 
-    def add_poly(self, x:float, y:float, z_min:float, z_max:float, 
-                 points, material, mesh_order=2, name='polygon', alpha=0.5):
+    def add_poly(self, x:float, y:float, z_min:float, z_max:float, points, material, mesh_order=2, name='polygon', alpha=0.5):
         """
         Adds a polygon object in the simulation.
 
@@ -190,8 +186,7 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', 1)
         self.lum.set('mesh order', mesh_order)
 
-    def add_mesh(self, x_min:float, x_max:float, y_min:float, y_max:float, z_min:float, z_max:float, 
-                 dx=None, dy=None, dz=None, structure=None, name='mesh'):
+    def add_mesh(self, x_min:float, x_max:float, y_min:float, y_max:float, z_min:float, z_max:float, dx=None, dy=None, dz=None, structure=None, name='mesh'):
         """
         Adds a mesh override to a specific area or structure in the simulation.
 
@@ -236,8 +231,7 @@ class LumericalBase():
             self.lum.set('override z mesh', 1)
             self.lum.set('dz', dz)
 
-    def add_index_monitor(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, 
-                          monitor_type='2D Z-normal', name='index monitor'):
+    def add_index_monitor(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, monitor_type='2D Z-normal', name='index monitor'):
         """
         Adds an index monitor.
 
@@ -276,9 +270,7 @@ class LumericalFDTD(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
-    def add_fdtd_3D(self, x_min:float, x_max:float, y_min:float, y_max:float, z_min:float, z_max:float, 
-                    x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='PML', z_max_bc='PML',
-                    mesh_accuracy=2, simulation_time=1000e-15):
+    def add_fdtd_3D(self, x_min:float, x_max:float, y_min:float, y_max:float, z_min:float, z_max:float, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='PML', z_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
         """
         Adds a 3D FDTD simulation region.
 
@@ -336,8 +328,7 @@ class LumericalFDTD(LumericalBase):
         self.lum.setglobalmonitor('wavelength span', wl_span)
         self.lum.setglobalmonitor('frequency points', n_points)
 
-    def add_power_monitor(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, 
-                          monitor_type='2D Z-normal', name='power monitor'):
+    def add_power_monitor(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, monitor_type='2D Z-normal', name='power monitor'):
         """
         Adds a field and power monitor in the simulation.
 
@@ -369,9 +360,7 @@ class LumericalFDTD(LumericalBase):
             self.lum.set('y span', y_span)
             self.lum.set('z', z)
 
-    def add_expansion_monitor(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, 
-                              center_wl:float, wl_span:float, monitor_type='2D X-normal', 
-                              mode_selection='fundamental mode', n_points=21, name='expansion monitor'):
+    def add_expansion_monitor(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, center_wl:float, wl_span:float, monitor_type='2D X-normal', mode_selection='fundamental mode', n_points=21, name='expansion monitor'):
         """
         Adds a mode expansion monitor in the simulation.
 
@@ -437,8 +426,7 @@ class LumericalFDTD(LumericalBase):
         self.lum.select(expansion_monitor)
         self.lum.setexpansion(port, power_monitor)
 
-    def add_movie_monitor(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, 
-                          monitor_type='2D Z-normal', name='movie monitor'):
+    def add_movie_monitor(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, monitor_type='2D Z-normal', name='movie monitor'):
         """
         Adds a movie monitor in the simulation.
 
@@ -470,8 +458,7 @@ class LumericalFDTD(LumericalBase):
             self.lum.set('y span', y_span)
             self.lum.set('z', z)
 
-    def add_mode_source(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, 
-                        center_wl:float, wl_span:float, axis='x-axis', direction='forward'):
+    def add_mode_source(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, center_wl:float, wl_span:float, axis='x-axis', direction='forward'):
         """
         Adds a mode source in the simulation. Depending on the injection axis, 
         the span along that axis will be disabled.
@@ -486,9 +473,9 @@ class LumericalFDTD(LumericalBase):
             direction : str, optional
                 Either "forward" or "backward".
         """
-        self.fdtd.addmode()
-        self.fdtd.set('injection axis', axis)
-        self.fdtd.set('direction', direction)
+        self.lum.addmode()
+        self.lum.set('injection axis', axis)
+        self.lum.set('direction', direction)
         if axis == 'x-axis':
             self.lum.set('x', x)
             self.lum.set('y', y)
@@ -507,11 +494,10 @@ class LumericalFDTD(LumericalBase):
             self.lum.set('y', y)
             self.lum.set('y span', y_span)
             self.lum.set('z', z)
-        self.fdtd.set('center wavelength', center_wl)
-        self.fdtd.set('wavelength span', wl_span)
+        self.lum.set('center wavelength', center_wl)
+        self.lum.set('wavelength span', wl_span)
 
-    def add_gauss_source(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, 
-                         radius:float, center_wl:float, wl_span:float, axis='x', direction='forward'):
+    def add_gauss_source(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, radius:float, center_wl:float, wl_span:float, axis='x', direction='forward'):
         """
         Adds a Gaussian source in the simulation. Uses waist radius.
 
