@@ -57,8 +57,41 @@ class LumericalBase():
                 self.lum.set('index', material)
             case _:
                 raise TypeError('Input parameter <material> must be either a string, integer, or float.')
+            
+    def _set_2D_monitor(self, name:str, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D Z-Normal'):
+        """
+        Sets up a 2D monitor's parameters, specifically, its name, monitor type, position, and size.
+        """
+        self.lum.set('name', name)
+        self.lum.set('monitor type', monitor_type)
+        if monitor_type == '2D X-normal':
+            # if not isinstance(y_span, float) or not isinstance(z_span, float):
+            #     raise ValueError('Monitor type "2D X-normal" selected. Input parameters <y_span> and <z_span> must be float values.')
+            if any(arg is None for arg in (y_span, z_span)):
+                raise ValueError('Input parameter <monitor_type> set to "2D X-normal", but <y_span> and <z_span> are not given.')
+            self.lum.set('x', x)
+            self.lum.set('y', y)
+            self.lum.set('y span', y_span)
+            self.lum.set('z', z)
+            self.lum.set('z span', z_span)
+        elif monitor_type == '2D Y-normal':
+            if any(arg is None for arg in (x_span, z_span)):
+                raise ValueError('Input parameter <monitor_type> set to "2D Y-normal", but <x_span> and <z_span> are not given.')
+            self.lum.set('x', x)
+            self.lum.set('x span', x_span)
+            self.lum.set('y', y)
+            self.lum.set('z', z)
+            self.lum.set('z span', z_span)
+        else:
+            if any(arg is None for arg in (x_span, z_span)):
+                raise ValueError('Input parameter <monitor_type> set to "2D Z-normal", but <x_span> and <y_span> are not given.')
+            self.lum.set('x', x)
+            self.lum.set('x span', x_span)
+            self.lum.set('y', y)
+            self.lum.set('y span', y_span)
+            self.lum.set('z', z)
 
-    def add_rect(self, x_min:float, x_max:float, y_min:float, y_max:float, z_min:float, z_max:float, material, mesh_order=2, name='rectangle', alpha=0.5):
+    def add_rect(self, material, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, mesh_order=2, name='rectangle', alpha=0.5):
         """
         Adds a rectangle object in the simulation.
 
@@ -74,12 +107,33 @@ class LumericalBase():
         """
         self.lum.addrect()
         self.lum.set('name', name)
-        self.lum.set('x min', x_min)
-        self.lum.set('x max', x_max)
-        self.lum.set('y min', y_min)
-        self.lum.set('y max', y_max)
-        self.lum.set('z min', z_min)
-        self.lum.set('z max', z_max)
+
+        if not x == None and not x_span == None:
+            self.lum.set('x', x)
+            self.lum.set('x span', x_span)
+        elif not x_min == None and not x_max == None:
+            self.lum.set('x min', x_min)
+            self.lum.set('x max', x_max)
+        else:
+            raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
+
+        if not y == None and not y_span == None:
+            self.lum.set('y', y)
+            self.lum.set('y span', y_span)
+        elif not y_min == None and not y_max == None:
+            self.lum.set('y min', y_min)
+            self.lum.set('y max', y_max)
+        else:
+            raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
+
+        if not z == None and not z_span == None:
+            self.lum.set('z', z)
+            self.lum.set('z span', z_span)
+        elif not z_min == None and not z_max == None:
+            self.lum.set('z min', z_min)
+            self.lum.set('z max', z_max)
+        else:
+            raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
 
         self._match_material(material=material)
         self.lum.set('alpha', alpha)
@@ -231,7 +285,7 @@ class LumericalBase():
             self.lum.set('override z mesh', 1)
             self.lum.set('dz', dz)
 
-    def add_index_monitor(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, monitor_type='2D Z-normal', name='index monitor'):
+    def add_index_monitor(self, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', name='index monitor'):
         """
         Adds an index monitor.
 
@@ -242,26 +296,12 @@ class LumericalBase():
                 Monitor name.
         """
         self.lum.addindex()
-        self.lum.set('name', name)
-        self.lum.set('monitor type', monitor_type)
-        if monitor_type == '2D X-normal':
-            self.lum.set('x', x)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        elif monitor_type == '2D Y-normal':
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        else:
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
+        self._set_2D_monitor(
+            x=x, x_span=x_span, 
+            y=y, y_span=y_span, 
+            z=z, z_span=z_span,
+            monitor_type=monitor_type, 
+            name=name)
 
 class LumericalFDTD(LumericalBase):
     """
@@ -270,7 +310,7 @@ class LumericalFDTD(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
-    def add_fdtd_3D(self, x_min:float, x_max:float, y_min:float, y_max:float, z_min:float, z_max:float, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='PML', z_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
+    def add_fdtd_3D(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='PML', z_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
         """
         Adds a 3D FDTD simulation region.
 
@@ -287,12 +327,32 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('simulation time', simulation_time)
 
         # Geometry
-        self.lum.set('x min', x_min)
-        self.lum.set('x max', x_max)
-        self.lum.set('y min', y_min)
-        self.lum.set('y max', y_max)
-        self.lum.set('z min', z_min)
-        self.lum.set('z max', z_max)
+        if not x == None and not x_span == None:
+            self.lum.set('x', x)
+            self.lum.set('x span', x_span)
+        elif not x_min == None and not x_max == None:
+            self.lum.set('x min', x_min)
+            self.lum.set('x max', x_max)
+        else:
+            raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
+
+        if not y == None and not y_span == None:
+            self.lum.set('y', y)
+            self.lum.set('y span', y_span)
+        elif not y_min == None and not y_max == None:
+            self.lum.set('y min', y_min)
+            self.lum.set('y max', y_max)
+        else:
+            raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
+
+        if not z == None and not z_span == None:
+            self.lum.set('z', z)
+            self.lum.set('z span', z_span)
+        elif not z_min == None and not z_max == None:
+            self.lum.set('z min', z_min)
+            self.lum.set('z max', z_max)
+        else:
+            raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
 
         # Boundary Conditions
         self.lum.set('x min bc', x_min_bc)
@@ -328,7 +388,7 @@ class LumericalFDTD(LumericalBase):
         self.lum.setglobalmonitor('wavelength span', wl_span)
         self.lum.setglobalmonitor('frequency points', n_points)
 
-    def add_power_monitor(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, monitor_type='2D Z-normal', name='power monitor'):
+    def add_power_monitor(self, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', name='power monitor'):
         """
         Adds a field and power monitor in the simulation.
 
@@ -339,28 +399,14 @@ class LumericalFDTD(LumericalBase):
                 Monitor name.
         """
         self.lum.addpower()
-        self.lum.set('name', name)
-        self.lum.set('monitor type', monitor_type)
-        if monitor_type == '2D X-normal':
-            self.lum.set('x', x)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        elif monitor_type == '2D Y-normal':
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        else:
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
+        self._set_2D_monitor(
+            x=x, x_span=x_span, 
+            y=y, y_span=y_span, 
+            z=z, z_span=z_span,
+            monitor_type=monitor_type, 
+            name=name)
 
-    def add_expansion_monitor(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, center_wl:float, wl_span:float, monitor_type='2D X-normal', mode_selection='fundamental mode', n_points=21, name='expansion monitor'):
+    def add_expansion_monitor(self, x:float, y:float, z:float, center_wl:float, wl_span:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', mode_selection='fundamental mode', n_points=21, name='expansion monitor'):
         """
         Adds a mode expansion monitor in the simulation.
 
@@ -375,27 +421,12 @@ class LumericalFDTD(LumericalBase):
                 Monitor name.
         """
         self.lum.addmodeexpansion()
-        self.lum.set('name', name)
-
-        self.lum.set('monitor type', monitor_type)
-        if monitor_type == '2D X-normal':
-            self.lum.set('x', x)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        elif monitor_type == '2D Y-normal':
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        else:
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
+        self._set_2D_monitor(
+            x=x, x_span=x_span, 
+            y=y, y_span=y_span, 
+            z=z, z_span=z_span,
+            monitor_type=monitor_type, 
+            name=name)
 
         if mode_selection == 'user select':
             self.lum.set('mode selection', mode_selection)
@@ -411,7 +442,7 @@ class LumericalFDTD(LumericalBase):
 
         self.lum.set('frequency points', n_points)
 
-    def set_expansion(self, expansion_monitor:str, power_monitor:str, port='Port'):
+    def set_expansion(self, expansion_monitor:str, power_monitor:str, port='port'):
         """
         Associates a power monitor with a mode expansion monitor.
 
@@ -426,7 +457,7 @@ class LumericalFDTD(LumericalBase):
         self.lum.select(expansion_monitor)
         self.lum.setexpansion(port, power_monitor)
 
-    def add_movie_monitor(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, monitor_type='2D Z-normal', name='movie monitor'):
+    def add_movie_monitor(self, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', name='movie monitor'):
         """
         Adds a movie monitor in the simulation.
 
@@ -437,28 +468,14 @@ class LumericalFDTD(LumericalBase):
                 Monitor name.
         """
         self.lum.addmovie()
-        self.lum.set('name', name)
-        self.lum.set('monitor type', monitor_type)
-        if monitor_type == '2D X-normal':
-            self.lum.set('x', x)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        elif monitor_type == '2D Y-normal':
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        else:
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
+        self._set_2D_monitor(
+            x=x, x_span=x_span, 
+            y=y, y_span=y_span, 
+            z=z, z_span=z_span,
+            monitor_type=monitor_type, 
+            name=name)
 
-    def add_mode_source(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, center_wl:float, wl_span:float, axis='x-axis', direction='forward'):
+    def add_mode_source(self, center_wl:float, wl_span:float, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, axis='x-axis', direction='forward'):
         """
         Adds a mode source in the simulation. Depending on the injection axis, 
         the span along that axis will be disabled.
@@ -477,18 +494,24 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('injection axis', axis)
         self.lum.set('direction', direction)
         if axis == 'x-axis':
+            if any(arg is None for arg in (y_span, z_span)):
+                raise ValueError('Input parameter <axis> selected to be "x-axis", but <y_span> and <z_span> are not given.')
             self.lum.set('x', x)
             self.lum.set('y', y)
             self.lum.set('y span', y_span)
             self.lum.set('z', z)
             self.lum.set('z span', z_span)
         elif axis == 'y-axis':
+            if any(arg is None for arg in (x_span, z_span)):
+                raise ValueError('Input parameter <axis> selected to be "y-axis", but <x_span> and <z_span> are not given.')
             self.lum.set('x', x)
             self.lum.set('x span', x_span)
             self.lum.set('y', y)
             self.lum.set('z', z)
             self.lum.set('z span', z_span)
         else:
+            if any(arg is None for arg in (x_span, y_span)):
+                raise ValueError('Input parameter <axis> selected to be "z-axis", but <x_span> and <y_span> are not given.')
             self.lum.set('x', x)
             self.lum.set('x span', x_span)
             self.lum.set('y', y)
@@ -497,17 +520,19 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('center wavelength', center_wl)
         self.lum.set('wavelength span', wl_span)
 
-    def add_gauss_source(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, radius:float, center_wl:float, wl_span:float, axis='x', direction='forward'):
+    def add_gauss_source(self, center_wl:float, wl_span:float, radius:float, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, distance=0, axis='x', direction='forward'):
         """
         Adds a Gaussian source in the simulation. Uses waist radius.
 
         Parameters:
-            radius : float
-                Waist radius in meters
             center_wl : float
                 Center wavelength in meters.
             wl_span : float
                 Wavelength span in meters.
+            radius : float
+                Waist radius in meters
+            distance : float, optional
+                Distance from waist in meters. Positive distance corresponds to a diverging beam, and negative distance corresponds to a converging beam.
             axis : str, optional
                 Propagation axis ("x", "y", or "z").
             direction : str, optional
@@ -517,18 +542,24 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('injection axis', axis)
         self.lum.set('direction', direction)
         if axis == 'x':
+            if any(arg is None for arg in (y_span, z_span)):
+                raise ValueError('Input parameter <axis> selected to be "x", but <y_span> and <z_span> are not given.')
             self.lum.set('x', x)
             self.lum.set('y', y)
             self.lum.set('y span', y_span)
             self.lum.set('z', z)
             self.lum.set('z span', z_span)
         elif axis == 'y':
+            if any(arg is None for arg in (x_span, z_span)):
+                raise ValueError('Input parameter <axis> selected to be "y", but <x_span> and <z_span> are not given.')
             self.lum.set('x', x)
             self.lum.set('x span', x_span)
             self.lum.set('y', y)
             self.lum.set('z', z)
             self.lum.set('z span', z_span)
         else:
+            if any(arg is None for arg in (x_span, y_span)):
+                raise ValueError('Input parameter <axis> selected to be "z", but <x_span> and yz_span> are not given.')
             self.lum.set('x', x)
             self.lum.set('x span', x_span)
             self.lum.set('y', y)
@@ -540,7 +571,7 @@ class LumericalFDTD(LumericalBase):
 
         self.lum.set('use scalar approximation', 1)
         self.lum.set('waist radius w0', radius)
-        self.lum.set('distance from waist', 0)
+        self.lum.set('distance from waist', distance)
     
 class LumericalMODE(LumericalBase):
     """
@@ -549,11 +580,7 @@ class LumericalMODE(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
-    def add_fde(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float,
-                x_min_bc='Metal', x_max_bc='Metal',
-                y_min_bc='Metal', y_max_bc='Metal',
-                z_min_bc='Metal', z_max_bc='Metal',
-                solver_type='2D X normal'):
+    def add_fde(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, x_min_bc='Metal', x_max_bc='Metal', y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal', solver_type='2D X normal'):
         """
         Adds a Finite Difference Eigenmode (FDE) solver region in the simulation.
         """
