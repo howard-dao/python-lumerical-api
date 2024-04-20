@@ -1,13 +1,6 @@
 import numpy as np
 
-# class N():
-#     def __init__(self) -> None:
-#         self.x = None
-#         self.y = None
-#         self.n = None
-
-
-def sisolver3d(nlayers:np.ndarray, dlayersx:np.ndarray, dlayersy:np.ndarray, dxy:np.ndarray, k0:float, OPTS:dict):
+def sisolver3d(nlayers:np.ndarray, xlayers:np.ndarray, ylayers:np.ndarray, dxy:np.ndarray, k0:float, OPTS:dict):
     
     # Default values for OPTS dictionary
     if not 'enginever' in OPTS:
@@ -60,19 +53,17 @@ def sisolver3d(nlayers:np.ndarray, dlayersx:np.ndarray, dlayersy:np.ndarray, dxy
         OPTS['BC'] = tmp
 
     # Parse the input structure
-    MM = len(dlayersx)
-    NN = len(dlayersy)
+    MM = len(xlayers)
+    NN = len(ylayers)
     dx = dxy[0]
     dy = dxy[1]
 
-    dlayersx[-1] = round(np.sum(dlayersx)) * dx - np.sum(dlayersx[0:-2])
-    dlayersy[-1] = round(np.sum(dlayersy)) * dy - np.sum(dlayersy[0:-2])
+    xlayers[-1] = round(np.sum(xlayers)/dx)*dx - np.sum(xlayers[0:-2])
+    ylayers[-1] = round(np.sum(ylayers)/dy)*dy - np.sum(ylayers[0:-2])
 
     # Interface (?)
-    # xint = [0, np.cumsum(dlayersx)]
-    # yint = [0, np.cumsum(dlayersy)]
-    xint = np.insert(np.cumsum(dlayersx), 0, 0)
-    yint = np.insert(np.cumsum(dlayersy), 0, 0)
+    xint = np.insert(np.cumsum(xlayers), 0, 0)
+    yint = np.insert(np.cumsum(ylayers), 0, 0)
 
     # Grid coordinates
     x = np.arange(0, xint[-1], dx/2)
@@ -90,107 +81,89 @@ def sisolver3d(nlayers:np.ndarray, dlayersx:np.ndarray, dlayersy:np.ndarray, dxy
     N['y'] = y
     N['n'] = np.zeros((len(x), len(y)))
 
-    xp = x[0:-1:2]
-    yp = y[0:-1:2]
+    xp = x[0:None:2]
+    yp = y[0:None:2]
     npsqz = np.zeros((len(xp), len(yp)))
 
     for mm in range(MM):
-        ixin = np.argwhere((xp + dx/2) > xint[mm] & (xp - dx/2) <= xint[mm+1])
-        # xpmin = max(xint[mm], xp[ixin] - dx/2)
-        # xpmax = min(xint[mm+1], xp[ixin] + dx/2)
-        if xint[mm] >= any(xp[ixin] - dx/2):
-            xpmin = xint[0]
-        else:
-            xpmin = xp[ixin] - dx/2
-        if xint[mm+1] <= any(xp[ixin] + dx/2):
-            xpmax = xint[mm+1]
-        else:
-            xpmax = xp[ixin] + dx/2
+        ixin = np.argwhere(((xp + dx/2) > xint[mm]) & ((xp - dx/2) <= xint[mm+1]))
+        ixin0 = ixin[0][0]
+        ixin1 = ixin[-1][0]
+
+        xpmin = np.maximum(xint[mm], xp[ixin] - dx/2)
+        xpmax = np.minimum(xint[mm+1], xp[ixin] + dx/2)
 
         for nn in range(NN):
-            iyin = np.argwhere((yp + dy/2) > yint[nn] & (yp - dy/2) <= yint[nn+1])
-            # ypmin = max(yint[nn], yp[iyin] - dy/2)
-            # ypmax = min(yint[nn+1], yp[iyin] + dy/2)
-            if yint[nn] >= any(yp[iyin] - dy/2):
-                ypmin = yint[nn]
-            else:
-                ypmin = yp[iyin] - dy/2
-            if yint[nn+1] <= any(yp[iyin] + dy/2):
-                ypmax = yint[nn+1]
-            else:
-                ypmax = yp[iyin] + dy/2
+            iyin = np.argwhere(((yp + dy/2) > yint[nn]) & ((yp - dy/2) <= yint[nn+1]))
+            iyin0 = iyin[0][0]
+            iyin1 = iyin[-1][0]
 
-            npsqz[ixin, iyin] = npsqz[ixin, iyin] + (xpmax - xpmin) * (ypmax - ypmin) / (dx * dy) * nlayers[nn,mm]**2
+            ypmin = np.maximum(yint[nn], yp[iyin] - dy/2)
+            ypmax = np.minimum(yint[nn+1], yp[iyin] + dy/2)
 
-    xp = x[0:-1:2]
+            npsqz[ixin0:ixin1+1, iyin0:iyin1+1] = npsqz[ixin0:ixin1+1, iyin0:iyin1+1] + (xpmax-xpmin) @ np.transpose(ypmax-ypmin) / (dx*dy) * nlayers[nn,mm]**2
+
+    xp = x[0:None:2]
     yp = y[1:-1:2]
     npsqy = np.Inf * np.ones((len(xp), len(yp)))
     npsqytot = np.zeros((len(xp), len(yp)))
 
     for mm in range(MM):
-        ixin = np.argwhere((xp + dx/2) > xint[mm] & (xp - dx/2) <= xint[mm+1])
-        # xpmin = max(xint[mm], xp[ixin] - dx/2)
-        # xpmax = min(xint[mm+1], xp[ixin] + dx/2)
-        if xint[mm] >= any(xp[ixin] - dx/2):
-            xpmin = xint[0]
-        else:
-            xpmin = xp[ixin] - dx/2
-        if xint[mm+1] <= any(xp[ixin] + dx/2):
-            xpmax = xint[mm+1]
-        else:
-            xpmax = xp[ixin] + dx/2
+        ixin = np.argwhere(((xp + dx/2) > xint[mm]) & ((xp - dx/2) <= xint[mm+1]))
+        ixin0 = ixin[0][0]
+        ixin1 = ixin[-1][0]
+
+        xpmin = np.maximum(xint[mm], xp[ixin] - dx/2)
+        xpmax = np.minimum(xint[mm+1], xp[ixin] + dx/2)
 
         for nn in range(NN):
-            iyin = np.argwhere((yp + dy/2) > yint[nn] & (yp - dy/2) <= yint[nn+1])
-            # ypmin = max(yint[nn], yp[iyin] - dy/2)
-            # ypmax = min(yint[nn+1], yp[iyin] + dy/2)
-            if yint[nn] >= any(yp[iyin] - dy/2):
-                ypmin = yint[nn]
-            else:
-                ypmin = yp[iyin] - dy/2
-            if yint[nn+1] <= any(yp[iyin] + dy/2):
-                ypmax = yint[nn+1]
-            else:
-                ypmax = yp[iyin] + dy/2
+            iyin = np.argwhere(((yp + dy/2) > yint[nn]) & ((yp - dy/2) <= yint[nn+1]))
+            iyin0 = iyin[0][0]
+            iyin1 = iyin[-1][0]
 
-            npsqy[ixin, iyin] = 1 / (1 / npsqy[ixin, iyin] + 1 / ((xpmax - xpmin) * (1 / (ypmax - ypmin)) / (dx/dy) * nlayers[nn, mm]**2))
+            ypmin = np.maximum(yint[nn], yp[iyin] - dy/2)
+            ypmax = np.minimum(yint[nn+1], yp[iyin] + dy/2)
+
+            npsqy[ixin0:ixin1+1, iyin0:iyin1+1] = 1 / (1/npsqy[ixin0:ixin1+1, iyin0:iyin1+1] + 1 / ((xpmax-xpmin) @ np.transpose(1/(ypmax-ypmin)) / (dx/dy) * nlayers[nn,mm]**2))
+
         npsqy[np.isinf(npsqy)] = 0
         npsqytot = npsqytot + npsqy
         npsqy = np.inf * np.ones((len(xp), len(yp)))
     
-    xp = x[1:-2:2]
-    yp = y[0:-1:2]
-    npsqx = np.inf * np.ones(len(xp), len(yp))
+    xp = x[1:-1:2]
+    yp = y[0:None:2]
+    npsqx = np.inf * np.ones((len(xp), len(yp)))
     npsqxtot = np.zeros((len(xp), len(yp)))
 
     for nn in range(NN):
-        iyin = np.argwhere((yp + dy/2) > yint[nn] & (yp - dy/2) <= yint[nn+1])
-        ypmin = max(yint[nn], yp[iyin] - dy/2)
-        ypmax = min(yint[nn+1], yint[iyin] + dy/2)
+        iyin = np.argwhere(((yp + dy/2) > yint[nn]) & ((yp - dy/2) <= yint[nn+1]))
+        iyin0 = iyin[0][0]
+        iyin1 = iyin[-1][0]
+
+        ypmin = np.maximum(yint[nn], yp[iyin] - dy/2)
+        ypmax = np.minimum(yint[nn+1], yp[iyin] + dy/2)
 
         for mm in range(MM):
-            ixin = np.argwhere((xp + dx/2) > xint[mm] & (xp - dx/2) <= xint[mm+1])
-            # xpmin = max(xint[mm], xp[ixin] - dx/2)
-            # xpmax = min(xint[mm+1], xp[ixin] + dx/2)
-            if xint[mm] >= any(xp[ixin] - dx/2):
-                xpmin = xint[0]
-            else:
-                xpmin = xp[ixin] - dx/2
-            if xint[mm+1] <= any(xp[ixin] + dx/2):
-                xpmax = xint[mm+1]
-            else:
-                xpmax = xp[ixin] + dx/2
+            ixin = np.argwhere(((xp + dx/2) > xint[mm]) & ((xp - dx/2) <= xint[mm+1]))
+            ixin0 = ixin[0][0]
+            ixin1 = ixin[-1][0]
 
-            npsqx[ixin, iyin] = 1 / (1 / npsqx[ixin, iyin] + 1 / (1 / (xpmax - xpmin) * (ypmax - ypmin) / (dy/dx) * nlayers[nn, mm]**2))
+            xpmin = np.maximum(xint[mm], xp[ixin] - dx/2)
+            xpmax = np.minimum(xint[mm+1], xp[ixin] + dx/2)
+
+            npsqx[ixin0:ixin1+1, iyin0:iyin1+1] = 1 / (1/npsqx[ixin0:ixin1+1, iyin0:iyin1+1] + 1 / (1 / (xpmax-xpmin) @ np.transpose(ypmax-ypmin) / (dy/dx) * nlayers[nn,mm]**2))
+
         npsqx[np.isinf(npsqx)] = 0
         npsqxtot = npsqxtot + npsqx
         npsqx = np.inf * np.ones((len(xp), len(yp)))
 
-    N['n'][0:-1:2, 0:-1:2] = np.sqrt(npsqz)
-    N['n'][0:-1:2, 1:-2:2] = np.sqrt(npsqytot)
-    N['n'][1:-2:2, 0:-1:2] = np.sqrt(npsqxtot)
+    N['n'][0:None:2, 0:None:2] = np.sqrt(npsqz)
+    N['n'][0:None:2, 1:-1:2] = np.sqrt(npsqytot)
+    N['n'][1:-1:2, 0:None:2] = np.sqrt(npsqxtot)
 
-    N['n'][1:-2:2, 2:-2:2] = np.sqrt((N['n'][0:-3:2, 1:-2:2]**2 + N['n'][2:-1:2, 1:-2:2]**2 + N['n'][1:-2:2, 0:-3:2]**2 + N['n'][1:-2:2, 2:-1:2]**2) / 4)
+    N['n'][1:-1:2, 1:-1:2] = np.sqrt((N['n'][0:-2:2, 1:-1:2]**2 + N['n'][2:None:2, 1:-1:2]**2 + N['n'][1:-1:2, 0:-2:2]**2 + N['n'][1:-1:2, 2:None:2]**2) / 4)
 
     if np.argwhere(np.isinf(N['n'])):
         raise ValueError('Si solver error: Generated index distribution has non-fininte elements.')
+
+    return N
