@@ -65,8 +65,6 @@ class LumericalBase():
         self.lum.set('name', name)
         self.lum.set('monitor type', monitor_type)
         if monitor_type == '2D X-normal':
-            # if not isinstance(y_span, float) or not isinstance(z_span, float):
-            #     raise ValueError('Monitor type "2D X-normal" selected. Input parameters <y_span> and <z_span> must be float values.')
             if any(arg is None for arg in (y_span, z_span)):
                 raise ValueError('Input parameter <monitor_type> set to "2D X-normal", but <y_span> and <z_span> are not given.')
             self.lum.set('x', x)
@@ -108,28 +106,29 @@ class LumericalBase():
         self.lum.addrect()
         self.lum.set('name', name)
 
-        if not x == None and not x_span == None:
+        # Geometry
+        if all(isinstance(arg, float) for arg in (x, x_span)):
             self.lum.set('x', x)
             self.lum.set('x span', x_span)
-        elif not x_min == None and not x_max == None:
+        elif all(isinstance(arg, float) for arg in (x_min, x_max)):
             self.lum.set('x min', x_min)
             self.lum.set('x max', x_max)
         else:
             raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
 
-        if not y == None and not y_span == None:
+        if all(isinstance(arg, float) for arg in (y, y_span)):
             self.lum.set('y', y)
             self.lum.set('y span', y_span)
-        elif not y_min == None and not y_max == None:
+        elif all(isinstance(arg, float) for arg in (y_min, y_max)):
             self.lum.set('y min', y_min)
             self.lum.set('y max', y_max)
         else:
             raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
 
-        if not z == None and not z_span == None:
+        if all(isinstance(arg, float) for arg in (z, z_span)):
             self.lum.set('z', z)
             self.lum.set('z span', z_span)
-        elif not z_min == None and not z_max == None:
+        elif all(isinstance(arg, float) for arg in (z_min, z_max)):
             self.lum.set('z min', z_min)
             self.lum.set('z max', z_max)
         else:
@@ -140,8 +139,7 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', 1)
         self.lum.set('mesh order', mesh_order)
 
-    def add_circle(self, x:float, y:float, z_min:float, z_max:float, 
-                   radius:float, axis:str, theta:float, material, mesh_order=2, name='circle', alpha=0.5):
+    def add_circle(self, x:float, y:float, z_min:float, z_max:float, radius:float, axis:str, theta:float, material, mesh_order=2, name='circle', alpha=0.5):
         """
         Adds a cylinder object in the simulation.
 
@@ -275,13 +273,13 @@ class LumericalBase():
             self.lum.set('structure', structure)
 
         # Sets the mesh overrides if they are specified
-        if dx is not None:
+        if isinstance(dx, float):
             self.lum.set('override x mesh', 1)
             self.lum.set('dx', dx)
-        if dy is not None:
+        if isinstance(dy, float):
             self.lum.set('override y mesh', 1)
             self.lum.set('dy', dy)
-        if dz is not None:
+        if isinstance(dz, float):
             self.lum.set('override z mesh', 1)
             self.lum.set('dz', dz)
 
@@ -327,28 +325,28 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('simulation time', simulation_time)
 
         # Geometry
-        if not x == None and not x_span == None:
+        if all(isinstance(arg, float) for arg in (x, x_span)):
             self.lum.set('x', x)
             self.lum.set('x span', x_span)
-        elif not x_min == None and not x_max == None:
+        elif all(isinstance(arg, float) for arg in (x_min, x_max)):
             self.lum.set('x min', x_min)
             self.lum.set('x max', x_max)
         else:
             raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
 
-        if not y == None and not y_span == None:
+        if all(isinstance(arg, float) for arg in (y, y_span)):
             self.lum.set('y', y)
             self.lum.set('y span', y_span)
-        elif not y_min == None and not y_max == None:
+        elif all(isinstance(arg, float) for arg in (y_min, y_max)):
             self.lum.set('y min', y_min)
             self.lum.set('y max', y_max)
         else:
             raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
 
-        if not z == None and not z_span == None:
+        if all(isinstance(arg, float) for arg in (z, z_span)):
             self.lum.set('z', z)
             self.lum.set('z span', z_span)
-        elif not z_min == None and not z_max == None:
+        elif all(isinstance(arg, float) for arg in (z_min, z_max)):
             self.lum.set('z min', z_min)
             self.lum.set('z max', z_max)
         else:
@@ -559,7 +557,7 @@ class LumericalFDTD(LumericalBase):
             self.lum.set('z span', z_span)
         else:
             if any(arg is None for arg in (x_span, y_span)):
-                raise ValueError('Input parameter <axis> selected to be "z", but <x_span> and yz_span> are not given.')
+                raise ValueError('Input parameter <axis> selected to be "z", but <x_span> and <y_span> are not given.')
             self.lum.set('x', x)
             self.lum.set('x span', x_span)
             self.lum.set('y', y)
@@ -580,7 +578,7 @@ class LumericalMODE(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
-    def add_fde(self, x:float, x_span:float, y:float, y_span:float, z:float, z_span:float, x_min_bc='Metal', x_max_bc='Metal', y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal', solver_type='2D X normal'):
+    def add_fde(self, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, x_min_bc='Metal', x_max_bc='Metal', y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal', solver_type='2D X normal'):
         """
         Adds a Finite Difference Eigenmode (FDE) solver region in the simulation.
         """
@@ -617,56 +615,63 @@ class LumericalMODE(LumericalBase):
             self.lum.set('y min bc', y_min_bc)
             self.lum.set('y max bc', y_max_bc)
 
-    def add_eme(self, x_min:float, y_min:float, y_max:float, z_min:float, z_max:float,
-                wl:float, groups=None, temperature=300, solver_type='3D: X Prop',
-                x_min_bc='Metal', x_max_bc='Metal',
-                y_min_bc='Metal', y_max_bc='Metal',
-                z_min_bc='Metal', z_max_bc='Metal'):
+    def add_eme_3D(self, x_min:float, wl:float, groups=np.ndarray, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, temperature=300, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
         """
         Adds an Eigenmode Expansion (EME) solver region in the simulation.
 
         Parameters:
             wl : float
                 Simulation wavelength in meters.
-            groups : [N-by-3] array-like
+            groups : [N-by-3] ndarray
                 Array containing information about each EME group. Each row represents a group.
                 The first column represents group spans in the x direction.
                 The second column represents the number of cells.
                 The third column represents the subcell method. 0 for none and 1 for CVCS.
             temperature : float, optional
                 Simulation temperature in Kelvin.
-            solver_type : str, optional
-                Either '3D: X Prop', 
         
         Raises:
             ValueError: <groups> has the wrong dimensions.
         """
         self.lum.addeme()
         self.lum.set('simulation temperature', temperature)
-        self.lum.set('solver type', solver_type)
+        self.lum.set('solver type', '3D: X Prop')
+        self.lum.set('wavelength', wl)
 
+        # Cell group definition
         groups = np.array(groups)
-        if groups.shape[0] >= 1:
-            self.lum.set('number of cell groups', groups.shape[0])
-        else:
+        if groups.shape[0] < 1:
             raise ValueError('Input parameter <groups> must have at least 1 row.')
-        if groups.shape[1] == 3:
-            self.lum.set('group spans', groups[:,0])
-            self.lum.set('cells', groups[:,1])
-            self.lum.set('subcell method', groups[:,2])
-        else:
+        self.lum.set('number of cell groups', groups.shape[0])
+        
+        if groups.shape[1] != 3:
             raise ValueError('Input parameter <groups> must have 3 columns.')
+        self.lum.set('group spans', groups[:,0])
+        self.lum.set('cells', groups[:,1])
+        self.lum.set('subcell method', groups[:,2])
 
         # EME region
         self.lum.set('x min', x_min)
-        self.lum.set('y min', y_min)
-        self.lum.set('y max', y_max)
-        self.lum.set('z min', z_min)
-        self.lum.set('z max', z_max)
+
+        if all(isinstance(arg, float) for arg in (y, y_span)):
+            self.lum.set('y', y)
+            self.lum.set('y span', y_span)
+        elif all(isinstance(arg, float) for arg in (y_min, y_max)):
+            self.lum.set('y min', y_min)
+            self.lum.set('y max', y_max)
+        else:
+            raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
+        
+        if all(isinstance(arg, float) for arg in (z, z_span)):
+            self.lum.set('z', z)
+            self.lum.set('z span', z_span)
+        elif all(isinstance(arg, float) for arg in (z_min, z_max)):
+            self.lum.set('z min', z_min)
+            self.lum.set('z max', z_max)
+        else:
+            raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
 
         # Boundary conditions
-        # self.lum.set('x min bc', x_min_bc)
-        # self.lum.set('x max bc', x_max_bc)
         self.lum.set('y min bc', y_min_bc)
         self.lum.set('y max bc', y_max_bc)
         self.lum.set('z min bc', z_min_bc)
