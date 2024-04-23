@@ -58,6 +58,34 @@ class LumericalBase():
             case _:
                 raise TypeError('Input parameter <material> must be either a string, integer, or float.')
             
+    def _draw_box(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None):
+        if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
+            self.lum.set('x', x)
+            self.lum.set('x span', x_span)
+        elif all(isinstance(arg, (int,float)) for arg in (x_min, x_max)):
+            self.lum.set('x min', x_min)
+            self.lum.set('x max', x_max)
+        else:
+            raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
+
+        if all(isinstance(arg, (int,float)) for arg in (y, y_span)):
+            self.lum.set('y', y)
+            self.lum.set('y span', y_span)
+        elif all(isinstance(arg, (int,float)) for arg in (y_min, y_max)):
+            self.lum.set('y min', y_min)
+            self.lum.set('y max', y_max)
+        else:
+            raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
+
+        if all(isinstance(arg, (int,float)) for arg in (z, z_span)):
+            self.lum.set('z', z)
+            self.lum.set('z span', z_span)
+        elif all(isinstance(arg, (int,float)) for arg in (z_min, z_max)):
+            self.lum.set('z min', z_min)
+            self.lum.set('z max', z_max)
+        else:
+            raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
+
     def _set_2D_monitor(self, name:str, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D Z-Normal'):
         """
         Sets up a 2D monitor's parameters, specifically, its name, monitor type, position, and size.
@@ -107,32 +135,10 @@ class LumericalBase():
         self.lum.set('name', name)
 
         # Geometry
-        if all(isinstance(arg, float) for arg in (x, x_span)):
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-        elif all(isinstance(arg, float) for arg in (x_min, x_max)):
-            self.lum.set('x min', x_min)
-            self.lum.set('x max', x_max)
-        else:
-            raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
-
-        if all(isinstance(arg, float) for arg in (y, y_span)):
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-        elif all(isinstance(arg, float) for arg in (y_min, y_max)):
-            self.lum.set('y min', y_min)
-            self.lum.set('y max', y_max)
-        else:
-            raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
-
-        if all(isinstance(arg, float) for arg in (z, z_span)):
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        elif all(isinstance(arg, float) for arg in (z_min, z_max)):
-            self.lum.set('z min', z_min)
-            self.lum.set('z max', z_max)
-        else:
-            raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
+        self._draw_box(
+            x=x, x_span=x_span, x_min=x_min, x_max=x_max, 
+            y=y, y_span=y_span, y_min=y_min, y_max=y_max, 
+            z=z, z_span=z_span, z_min=z_min, z_max=z_max)
 
         self._match_material(material=material)
         self.lum.set('alpha', alpha)
@@ -325,32 +331,10 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('simulation time', simulation_time)
 
         # Geometry
-        if all(isinstance(arg, float) for arg in (x, x_span)):
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-        elif all(isinstance(arg, float) for arg in (x_min, x_max)):
-            self.lum.set('x min', x_min)
-            self.lum.set('x max', x_max)
-        else:
-            raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
-
-        if all(isinstance(arg, float) for arg in (y, y_span)):
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-        elif all(isinstance(arg, float) for arg in (y_min, y_max)):
-            self.lum.set('y min', y_min)
-            self.lum.set('y max', y_max)
-        else:
-            raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
-
-        if all(isinstance(arg, float) for arg in (z, z_span)):
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        elif all(isinstance(arg, float) for arg in (z_min, z_max)):
-            self.lum.set('z min', z_min)
-            self.lum.set('z max', z_max)
-        else:
-            raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
+        self._draw_box(
+            x=x, x_span=x_span, x_min=x_min, x_max=x_max, 
+            y=y, y_span=y_span, y_min=y_min, y_max=y_max, 
+            z=z, z_span=z_span, z_min=z_min, z_max=z_max)
 
         # Boundary Conditions
         self.lum.set('x min bc', x_min_bc)
@@ -518,7 +502,7 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('center wavelength', center_wl)
         self.lum.set('wavelength span', wl_span)
 
-    def add_gauss_source(self, center_wl:float, wl_span:float, radius:float, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, distance=0, axis='x', direction='forward'):
+    def add_gauss_source(self, center_wl:float, wl_span:float, radius:float, angle:float, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, distance=0, axis='x', direction='forward'):
         """
         Adds a Gaussian source in the simulation. Uses waist radius.
 
@@ -528,7 +512,9 @@ class LumericalFDTD(LumericalBase):
             wl_span : float
                 Wavelength span in meters.
             radius : float
-                Waist radius in meters
+                Waist radius in meters.
+            angle : float
+                Angular direction in degrees.
             distance : float, optional
                 Distance from waist in meters. Positive distance corresponds to a diverging beam, and negative distance corresponds to a converging beam.
             axis : str, optional
@@ -569,6 +555,7 @@ class LumericalFDTD(LumericalBase):
 
         self.lum.set('use scalar approximation', 1)
         self.lum.set('waist radius w0', radius)
+        self.lum.set('angle theta', angle)
         self.lum.set('distance from waist', distance)
     
 class LumericalMODE(LumericalBase):
@@ -653,19 +640,19 @@ class LumericalMODE(LumericalBase):
         # EME region
         self.lum.set('x min', x_min)
 
-        if all(isinstance(arg, float) for arg in (y, y_span)):
+        if all(isinstance(arg, (int,float)) for arg in (y, y_span)):
             self.lum.set('y', y)
             self.lum.set('y span', y_span)
-        elif all(isinstance(arg, float) for arg in (y_min, y_max)):
+        elif all(isinstance(arg, (int,float)) for arg in (y_min, y_max)):
             self.lum.set('y min', y_min)
             self.lum.set('y max', y_max)
         else:
             raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
         
-        if all(isinstance(arg, float) for arg in (z, z_span)):
+        if all(isinstance(arg, (int,float)) for arg in (z, z_span)):
             self.lum.set('z', z)
             self.lum.set('z span', z_span)
-        elif all(isinstance(arg, float) for arg in (z_min, z_max)):
+        elif all(isinstance(arg, (int,float)) for arg in (z_min, z_max)):
             self.lum.set('z min', z_min)
             self.lum.set('z max', z_max)
         else:
