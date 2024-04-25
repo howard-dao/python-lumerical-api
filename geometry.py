@@ -7,16 +7,16 @@ import numpy as np
 from scipy.integrate import odeint
 import copy
 
-def _translate(points:np.ndarray, dx:float, dy:float):
+def _translate(points:np.ndarray, dx=0, dy=0):
     """
     Translates vertices along either x and y directions.
 
     Parameters:
         points : [N-by-2] ndarray
             Shape vertices.
-        dx : float
+        dx : float, optional
             Distance along x.
-        dy : float
+        dy : float, optional
             Distance along y.
 
     Returns:
@@ -48,7 +48,7 @@ def _reflect(points:np.ndarray, angle:float):
 
     return new_points
 
-def _rotate(points:np.ndarray, angle:float, origin=[0,0], unit='deg'):
+def _rotate(points:np.ndarray, angle:float, origin=[0,0]):
     """
     Rotates a shape counterclockwise about an origin point.
 
@@ -56,18 +56,14 @@ def _rotate(points:np.ndarray, angle:float, origin=[0,0], unit='deg'):
         points : [N-by-2] ndarray
             Shape vertices.
         angle : float
-            Angle of rotation.
+            Angle of rotation in degrees.
         origin : [1-by-2] array-like
             Point about which to rotate.
-        unit : str
-            Angle units ('deg' or 'rad').
 
     Returns:
         [N-by-2] ndarray : Rotated vertices.
     """
-    if unit == 'deg':
-        angle = np.deg2rad(angle)
-    
+    angle = np.deg2rad(angle)
     ox,oy = origin
     new_points = _translate(points, dx=-ox, dy=-oy)
 
@@ -259,8 +255,32 @@ def circular_s_bend(width:float, radius:float, span:float, reflect=False, angle=
     return points
 
 def _clothoid_ode_rhs(state, t, kappa0, kappa1):
+    """
+    Helper function to set up Euler ODEs.
+    """
     x, y, theta = state[0], state[1], state[2]
     return np.array([np.cos(theta), np.sin(theta), kappa0 + kappa1*t])
+
+def _euler_curve(min_radius:float, angle_range:float, angle_start=0, n_points=100):
+    """
+    Helper function to create an Euler curve.
+    """
+    x0, y0, theta0 = 0, 0, np.deg2rad(angle_start)
+    thetas = np.deg2rad(angle_range)
+    L = 2 * min_radius * thetas
+    t = np.linspace(0, L, n_points)
+    kappa0 = 0
+    kappa1 = 2 * thetas / L**2
+
+    sol = odeint(
+        func=_clothoid_ode_rhs, 
+        y0=np.array([x0,y0,theta0]), 
+        t=t, 
+        args=(kappa0,kappa1))
+
+    x, y, theta = sol[:,0], sol[:,1], sol[:,2]
+
+    return x, y, theta
 
 def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, direction='counterclockwise', n_points=100):
     """
@@ -286,25 +306,17 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, d
         raise ValueError(
             'Input parameter <direction> must be either "clockwise" or "counterclockwise".')
 
-    x0, y0, theta0 = 0, 0, np.deg2rad(angle_start)
-    thetas = np.deg2rad(angle_range)
-    L = 2 * min_radius * thetas
-    t = np.linspace(0, L, n_points)
-    kappa0 = 0
-    kappa1 = 2 * thetas / L**2
+    xt, yt, theta = _euler_curve(
+        min_radius=min_radius, 
+        angle_range=angle_range, 
+        angle_start=angle_start, 
+        n_points=n_points)
 
-    sol = odeint(func=_clothoid_ode_rhs, 
-                 y0=np.array([x0,y0,theta0]), 
-                 t=t, 
-                 args=(kappa0,kappa1))
+    x_inner = xt + (width/2)*np.cos(theta + np.pi/2)
+    y_inner = yt + (width/2)*np.sin(theta + np.pi/2)
 
-    x, y, theta = sol[:,0], sol[:,1], sol[:,2]
-
-    x_inner = x + (width/2)*np.cos(theta + np.pi/2)
-    y_inner = y + (width/2)*np.sin(theta + np.pi/2)
-
-    x_outer = x + (width/2)*np.cos(theta - np.pi/2)
-    y_outer = y + (width/2)*np.sin(theta - np.pi/2)
+    x_outer = xt + (width/2)*np.cos(theta - np.pi/2)
+    y_outer = yt + (width/2)*np.sin(theta - np.pi/2)
 
     x = np.hstack((x_inner, x_outer[::-1]))
     y = np.hstack((y_inner, y_outer[::-1]))
@@ -315,4 +327,78 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, d
     if direction == 'clockwise':
         points = _reflect(points=points, angle=angle_start)
 
+    return points
+
+def euler_u_bend(width:float, span:float, angle=0, direction='counterclockwise', n_points=100):
+    """
+    Generates an Euler 180 degree bend path.
+    """
+    if n_points % 2 != 0:
+        n_points += 1
+    if direction != 'clockwise' and direction != 'counterclockwise':
+        raise ValueError(
+            'Input parameter <direction> must be either "clockwise" or "counterclockwise".')
+
+    rad_to_span_ratio = 0.7263051699691657 / 2
+    min_radius = rad_to_span_ratio * span
+
+    half_n_points = round(n_points/2)
+
+    points1 = euler_arc(
+        width=width, 
+        min_radius=min_radius, 
+        angle_range=90, 
+        angle_start=0, 
+        direction=direction, 
+        n_points=half_n_points)
+    
+    points2 = _reflect(points1, angle=0)
+    points2 = _translate(points=points2, dy=span)
+    
+    points = np.vstack((
+        points1[:half_n_points-1], 
+        points2[half_n_points-1::-1], 
+        points2[-1:half_n_points:-1], 
+        points1[half_n_points:]))
+
+    return points
+
+def euler_l_bend(width:float, min_radius:float, direction='counterclockwise', n_points=100):
+    if n_points % 2 != 0:
+        n_points += 1
+    if direction != 'clockwise' and direction != 'counterclockwise':
+        raise ValueError(
+            'Input parameter <direction> must be either "clockwise" or "counterclockwise".')
+    
+    # rad_to_span_ratio = 2.5415151437386307  / 2
+    # min_radius = rad_to_span_ratio * span
+
+    half_n_points = round(n_points/2)
+
+    xt, yt, theta = _euler_curve(
+        min_radius=min_radius, 
+        angle_range=45, 
+        n_points=half_n_points)
+    
+    x_inner = xt + (width/2)*np.cos(theta + np.pi/2)
+    y_inner = yt + (width/2)*np.sin(theta + np.pi/2)
+
+    x_outer = xt + (width/2)*np.cos(theta - np.pi/2)
+    y_outer = yt + (width/2)*np.sin(theta - np.pi/2)
+
+    x = np.hstack((x_inner, x_outer[::-1]))
+    y = np.hstack((y_inner, y_outer[::-1]))
+
+    points1 = np.transpose(np.vstack((x,y)))
+
+    points2 = _reflect(points1, angle=0)
+    points2 = _rotate(points2, angle=-90)
+    points2 = _translate(points2, dx=max(xt)+max(yt), dy=max(xt)+max(yt))
+
+    points = np.vstack((
+        points1[:half_n_points-1], 
+        points2[half_n_points-1::-1], 
+        points2[-1:half_n_points:-1], 
+        points1[half_n_points:]))
+    
     return points
