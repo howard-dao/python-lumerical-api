@@ -242,12 +242,6 @@ class LumericalBase():
         self.lum.set('name', name)
 
         # Geometry settings
-        # self.lum.set('x min', x_min)
-        # self.lum.set('x max', x_max)
-        # self.lum.set('y min', y_min)
-        # self.lum.set('y max', y_max)
-        # self.lum.set('z min', z_min)
-        # self.lum.set('z max', z_max)
         dimensions = (x, x_span, x_min, x_max, y, y_span, y_min, y_max, z, z_span, z_min, z_max)
         if not all(arg is None for arg in dimensions):
             self._draw_box(

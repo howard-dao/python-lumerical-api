@@ -44,7 +44,7 @@ def _reflect(points:np.ndarray, angle:float):
     angle = np.deg2rad(angle)
     matrix = np.array([[np.cos(2*angle), np.sin(2*angle)],
                        [np.sin(2*angle), -np.cos(2*angle)]])
-    new_points = np.transpose(np.matmul(matrix, np.transpose(points)))
+    new_points = np.transpose(np.matmul(matrix, points.T))
 
     return new_points
 
@@ -70,7 +70,7 @@ def _rotate(points:np.ndarray, angle:float, origin=[0,0]):
     matrix = np.array([[np.cos(angle), -np.sin(angle)],
                        [np.sin(angle), np.cos(angle)]])
     
-    new_points = np.transpose(np.matmul(matrix, np.transpose(new_points)))
+    new_points = np.transpose(np.matmul(matrix, new_points.T))
     new_points = _translate(new_points, dx=ox, dy=oy)
 
     return new_points
@@ -94,7 +94,7 @@ def linear_taper(w0:float, w1:float, length:float):
     x = [0, length, length, 0]
     y = [w0/2, w1/2, -w1/2, -w0/2]
 
-    points = np.transpose(np.vstack((x,y)))
+    points = np.vstack((x,y)).T
 
     return points
 
@@ -129,6 +129,9 @@ def parabolic_taper(w0:float, w1:float, length:float, n_points=100):
     points = np.array(points_top + points_bot)
     
     return points
+
+def euler_taper(w0:float, w1:float, length:float, n_points=100):
+    return
 
 def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, direction='counterclockwise',  n_points=100):
     """
@@ -199,7 +202,29 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, di
 
     return points
 
-def circular_s_bend(width:float, radius:float, span:float, reflect=False, angle=0, n_points=100):
+def circular_ring(width:float, radius:float, n_points=100):
+    """
+    Generates a circular ring.
+    
+    Parameters:
+        width : float
+            Arc width.
+        radius : float
+            Arc center radius.
+        n_points : int, optional
+            Number of points.
+
+    Returns:
+        [N-by-2] ndarray : Ring vertices.
+    """
+    points = circular_arc(
+        width=width, 
+        radius=radius, 
+        angle_range=360, 
+        n_points=n_points)
+    return points
+
+def circular_s_bend(width:float, radius:float, span:float, reflect=False, angle_start=0, n_points=100):
     """
     Generates a circular S-bend.
 
@@ -212,7 +237,7 @@ def circular_s_bend(width:float, radius:float, span:float, reflect=False, angle=
             Lateral distance.
         reflect : bool, optional
             Whether to reflect over longitudinal axis.
-        angle : float, optional
+        angle_start : float, optional
             Longitudinal angular direction in degrees.
         n_points : int, optional
             Number of points.
@@ -249,8 +274,8 @@ def circular_s_bend(width:float, radius:float, span:float, reflect=False, angle=
     if reflect:
         points = _reflect(points, angle=0)
 
-    if angle != 0:
-        points = _rotate(points, angle=angle)
+    if angle_start != 0:
+        points = _rotate(points, angle=angle_start)
 
     return points
 
@@ -322,7 +347,7 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, d
     y = np.hstack((y_inner, y_outer[::-1]))
     
     # points = np.array([(xp, yp) for xp, yp in zip(x, y)])
-    points = np.transpose(np.vstack((x,y)))
+    points = np.vstack((x,y)).T
 
     if direction == 'clockwise':
         points = _reflect(points=points, angle=angle_start)
@@ -339,8 +364,9 @@ def euler_u_bend(width:float, span:float, angle=0, direction='counterclockwise',
         raise ValueError(
             'Input parameter <direction> must be either "clockwise" or "counterclockwise".')
 
-    rad_to_span_ratio = 0.7263051699691657 / 2
-    min_radius = rad_to_span_ratio * span
+    # Simulated relationship between minimum bend radius and span.
+    rad_to_span_ratio = 0.7263051699691657
+    min_radius = rad_to_span_ratio * span/2
 
     half_n_points = round(n_points/2)
 
@@ -389,7 +415,7 @@ def euler_l_bend(width:float, min_radius:float, direction='counterclockwise', n_
     x = np.hstack((x_inner, x_outer[::-1]))
     y = np.hstack((y_inner, y_outer[::-1]))
 
-    points1 = np.transpose(np.vstack((x,y)))
+    points1 = np.vstack((x,y)).T
 
     points2 = _reflect(points1, angle=0)
     points2 = _rotate(points2, angle=-90)
