@@ -4,35 +4,10 @@ Author(s): Howard Dao
 """
 
 import numpy as np
-from os import getcwd, listdir, remove
-from os.path import join
-from shutil import move
 
 class LumericalBase():
     def __init__(self, lum) -> None:
         self.lum = lum
-
-    def save_file_in_dir(self, file:str, path=getcwd(), overwrite=False):
-        """
-        Saves a file to a specified folder. If a file with the same name already exists,
-        one may choose to overwrite it.
-
-        Parameters:
-            file : str
-                Name of the file to save as.
-            path : str, optional
-                Name of the destination directory. Current directory by default.
-            overwrite : bool, optional
-                Whether or not to overwrite an existing file with the same name. False by default.
-        """
-        files = listdir(path)
-        if file in files and overwrite:
-            print('File already exists, overwriting...')
-            remove(join(path, file))
-        try:
-            move(file, path)
-        except:
-            print('File already exists, not overwriting')
     
     def _match_material(self, material):
         """
@@ -59,6 +34,9 @@ class LumericalBase():
                 raise TypeError('Input parameter <material> must be either a string, integer, or float.')
             
     def _draw_box(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None):
+        """
+        Helper function for setting any 3D region.
+        """
         if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
             self.lum.set('x', x)
             self.lum.set('x span', x_span)
@@ -88,7 +66,7 @@ class LumericalBase():
 
     def _set_2D_monitor(self, name:str, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D Z-Normal'):
         """
-        Sets up a 2D monitor's parameters, specifically, its name, monitor type, position, and size.
+        Sets a 2D monitor's parameters, specifically, its name, monitor type, position, and size.
         """
         self.lum.set('name', name)
         self.lum.set('monitor type', monitor_type)
@@ -244,7 +222,7 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', 1)
         self.lum.set('mesh order', mesh_order)
 
-    def add_mesh(self, x_min:float, x_max:float, y_min:float, y_max:float, z_min:float, z_max:float, dx=None, dy=None, dz=None, structure=None, name='mesh'):
+    def add_mesh(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, dx=None, dy=None, dz=None, structure=None, name='mesh'):
         """
         Adds a mesh override to a specific area or structure in the simulation.
 
@@ -264,12 +242,18 @@ class LumericalBase():
         self.lum.set('name', name)
 
         # Geometry settings
-        self.lum.set('x min', x_min)
-        self.lum.set('x max', x_max)
-        self.lum.set('y min', y_min)
-        self.lum.set('y max', y_max)
-        self.lum.set('z min', z_min)
-        self.lum.set('z max', z_max)
+        # self.lum.set('x min', x_min)
+        # self.lum.set('x max', x_max)
+        # self.lum.set('y min', y_min)
+        # self.lum.set('y max', y_max)
+        # self.lum.set('z min', z_min)
+        # self.lum.set('z max', z_max)
+        dimensions = (x, x_span, x_min, x_max, y, y_span, y_min, y_max, z, z_span, z_min, z_max)
+        if not all(arg is None for arg in dimensions):
+            self._draw_box(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max, 
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max, 
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
 
         # If <structure> is specified as a string, override the mesh of the structure.
         # This only takes effect if <structure> is exactly equal to the name of the object
@@ -326,7 +310,7 @@ class LumericalFDTD(LumericalBase):
         """
         self.lum.addfdtd()
 
-        # General Settings
+        # General
         self.lum.set('dimension', '3D')
         self.lum.set('simulation time', simulation_time)
 
@@ -343,6 +327,46 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('y max bc', y_max_bc)
         self.lum.set('z min bc', z_min_bc)
         self.lum.set('z max bc', z_max_bc)
+
+        # Mesh Settings
+        self.lum.set('mesh accuracy', mesh_accuracy)
+
+    def add_fdtd_2D(self, z:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
+        """
+        Adds a 2D FDTD simulation area.
+        """
+        self.lum.addfdtd()
+
+        # General
+        self.lum.set('dimension', '2D')
+        self.lum.set('simulation time', simulation_time)
+
+        # Geometry
+        if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
+            self.lum.set('x', x)
+            self.lum.set('x span', x_span)
+        elif all(isinstance(arg, (int,float)) for arg in (x_min, x_max)):
+            self.lum.set('x min', x_min)
+            self.lum.set('x max', x_max)
+        else:
+            raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
+        
+        if all(isinstance(arg, (int,float)) for arg in (y, y_span)):
+            self.lum.set('y', y)
+            self.lum.set('y span', y_span)
+        elif all(isinstance(arg, (int,float)) for arg in (y_min, y_max)):
+            self.lum.set('y min', y_min)
+            self.lum.set('y max', y_max)
+        else:
+            raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
+        
+        self.lum.set('z', z)
+
+        # Boundary Conditions
+        self.lum.set('x min bc', x_min_bc)
+        self.lum.set('x max bc', x_max_bc)
+        self.lum.set('y min bc', y_min_bc)
+        self.lum.set('y max bc', y_max_bc)
 
         # Mesh Settings
         self.lum.set('mesh accuracy', mesh_accuracy)
@@ -565,7 +589,7 @@ class LumericalMODE(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
-    def add_fde(self, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, x_min_bc='Metal', x_max_bc='Metal', y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal', solver_type='2D X normal'):
+    def add_fde(self, x:float, y:float, z:float, wl:float, x_span=None, y_span=None, z_span=None, x_min_bc='Metal', x_max_bc='Metal', y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal', solver_type='2D X normal', n_modes=4):
         """
         Adds a Finite Difference Eigenmode (FDE) solver region in the simulation.
         """
@@ -601,8 +625,13 @@ class LumericalMODE(LumericalBase):
             self.lum.set('x max bc', x_max_bc)
             self.lum.set('y min bc', y_min_bc)
             self.lum.set('y max bc', y_max_bc)
+        else:
+            raise ValueError('Input parameter <solver_type> was given incorrect setting.')
+        
+        self.lum.setanalysis('wavelength', wl)
+        self.lum.setanalysis('number of trial modes', n_modes)
 
-    def add_eme_3D(self, x_min:float, wl:float, groups=np.ndarray, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, temperature=300, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
+    def add_eme_3D(self, x_min:float, wl:float, groups:np.ndarray, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, temperature=300, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
         """
         Adds an Eigenmode Expansion (EME) solver region in the simulation.
 
@@ -636,6 +665,15 @@ class LumericalMODE(LumericalBase):
         self.lum.set('group spans', groups[:,0])
         self.lum.set('cells', groups[:,1])
         self.lum.set('subcell method', groups[:,2])
+        # n_groups = len(groups[0])
+        # if len(groups[1]) != n_groups:
+        #     raise ValueError('.')
+        # if len(groups[2]) != n_groups:
+        #     raise ValueError('.')
+        
+        # self.lum.set('group spans', groups[0].T)
+        # self.lum.set('cells', groups[1].T)
+        # self.lum.set('subcell method', groups[2].T)
 
         # EME region
         self.lum.set('x min', x_min)
@@ -663,6 +701,18 @@ class LumericalMODE(LumericalBase):
         self.lum.set('y max bc', y_max_bc)
         self.lum.set('z min bc', z_min_bc)
         self.lum.set('z max bc', z_max_bc)
+
+    def add_eme_profile_monitor(self, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', name='profile monitor'):
+        """
+        Adds a profile monitor for an EME solver region.
+        """
+        self.lum.addemeprofile()
+        self._set_2D_monitor(
+            x=x, x_span=x_span, 
+            y=y, y_span=y_span, 
+            z=z, z_span=z_span,
+            monitor_type=monitor_type, 
+            name=name)
 
 class LumericalHEAT(LumericalBase):
     """
