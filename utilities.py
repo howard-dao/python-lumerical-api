@@ -87,7 +87,7 @@ class LumericalBase():
             self.lum.set('z', z)
             self.lum.set('z span', z_span)
         else:
-            if any(arg is None for arg in (x_span, z_span)):
+            if any(arg is None for arg in (x_span, y_span)):
                 raise ValueError('Input parameter <monitor_type> set to "2D Z-normal", but <x_span> and <y_span> are not given.')
             self.lum.set('x', x)
             self.lum.set('x span', x_span)
@@ -120,7 +120,7 @@ class LumericalBase():
 
         self._match_material(material=material)
         self.lum.set('alpha', alpha)
-        self.lum.set('override mesh order from material database', 1)
+        self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
     def add_circle(self, x:float, y:float, z_min:float, z_max:float, radius:float, axis:str, theta:float, material, mesh_order=2, name='circle', alpha=0.5):
@@ -155,7 +155,7 @@ class LumericalBase():
 
         self._match_material(material=material)
         self.lum.set('alpha', alpha)
-        self.lum.set('override mesh order from material database', 1)
+        self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
     def add_ring(self, x:float, y:float, z_min:float, z_max:float, r_out:float, r_in:float, material, mesh_order=2, name='ring', alpha=0.5):
@@ -190,16 +190,16 @@ class LumericalBase():
 
         self._match_material(material=material)
         self.lum.set('alpha', alpha)
-        self.lum.set('override mesh order from material database', 1)
+        self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
-    def add_poly(self, x:float, y:float, z_min:float, z_max:float, points, material, mesh_order=2, name='polygon', alpha=0.5):
+    def add_poly(self, x:float, y:float, vertices, material, z=None, z_span=None, z_min=None, z_max=None, mesh_order=2, name='polygon', alpha=0.5):
         """
         Adds a polygon object in the simulation.
 
         Parameters:
-            points : [N-by-2] array
-                Points defining polygon shape.
+            vertices : [N-by-2] array
+                Vertices defining polygon shape.
             material : float or str
                 If float, sets material index; if string, sets material to library material.
             mesh_order : int, optional
@@ -210,16 +210,23 @@ class LumericalBase():
                 Object render opacity.
         """
         self.lum.addpoly()
-        self.lum.set('vertices', points)
+        self.lum.set('vertices', vertices)
         self.lum.set('name', name)
         self.lum.set('x', x)
         self.lum.set('y', y)
-        self.lum.set('z min', z_min)
-        self.lum.set('z max', z_max)
+
+        if all(isinstance(arg, (int,float)) for arg in (z, z_span)):
+            self.lum.set('z', z)
+            self.lum.set('z span', z_span)
+        elif all(isinstance(arg, (int,float)) for arg in (z_min, z_max)):
+            self.lum.set('z min', z_min)
+            self.lum.set('z max', z_max)
+        else:
+            raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
 
         self._match_material(material=material)
         self.lum.set('alpha', alpha)
-        self.lum.set('override mesh order from material database', 1)
+        self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
     def add_mesh(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, dx=None, dy=None, dz=None, structure=None, name='mesh'):
@@ -258,13 +265,13 @@ class LumericalBase():
 
         # Sets the mesh overrides if they are specified
         if isinstance(dx, float):
-            self.lum.set('override x mesh', 1)
+            self.lum.set('override x mesh', True)
             self.lum.set('dx', dx)
         if isinstance(dy, float):
-            self.lum.set('override y mesh', 1)
+            self.lum.set('override y mesh', True)
             self.lum.set('dy', dy)
         if isinstance(dz, float):
-            self.lum.set('override z mesh', 1)
+            self.lum.set('override z mesh', True)
             self.lum.set('dz', dz)
 
     def add_index_monitor(self, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', name='index monitor'):
@@ -365,7 +372,7 @@ class LumericalFDTD(LumericalBase):
         # Mesh Settings
         self.lum.set('mesh accuracy', mesh_accuracy)
 
-    def set_global_monitors(self, center_wl:float, wl_span:float, use_wl_spacing=True, n_points=21):
+    def set_global_monitors(self, center_wl:float, wl_span:float, use_wl_spacing=True, num_pts=21):
         """
         Set global monitor settings.
 
@@ -376,17 +383,17 @@ class LumericalFDTD(LumericalBase):
                 Wavelength span in meters.
             use_wl_spacing : bool, optional
                 True for equal wavelength intervals. False for equal frequency intervals.
-            n_points : int, optional
+            num_pts : int, optional
                 Number of wavelength points.
         """
         if use_wl_spacing:
-            self.lum.setglobalmonitor('use wavelength spacing', 1)
+            self.lum.setglobalmonitor('use wavelength spacing', True)
         else:
-            self.lum.setglobalmonitor('use wavelength spacing', 0)
+            self.lum.setglobalmonitor('use wavelength spacing', False)
             
         self.lum.setglobalmonitor('wavelength center', center_wl)
         self.lum.setglobalmonitor('wavelength span', wl_span)
-        self.lum.setglobalmonitor('frequency points', n_points)
+        self.lum.setglobalmonitor('frequency points', num_pts)
 
     def add_power_monitor(self, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', name='power monitor'):
         """
@@ -406,7 +413,7 @@ class LumericalFDTD(LumericalBase):
             monitor_type=monitor_type, 
             name=name)
 
-    def add_expansion_monitor(self, x:float, y:float, z:float, center_wl:float, wl_span:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', mode_selection='fundamental mode', n_points=21, name='expansion monitor'):
+    def add_expansion_monitor(self, x:float, y:float, z:float, center_wl:float, wl_span:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', mode_selection='fundamental mode', num_pts=21, name='expansion monitor'):
         """
         Adds a mode expansion monitor in the simulation.
 
@@ -415,7 +422,7 @@ class LumericalFDTD(LumericalBase):
                 Monitor orientation.
             mode_selection : str, optional
                 Either "fundamental mode" or "user select".
-            n_points : int, optional
+            num_pts : int, optional
                 Number of wavelength points.
             name : str, optional
                 Monitor name.
@@ -432,7 +439,7 @@ class LumericalFDTD(LumericalBase):
             self.lum.set('mode selection', mode_selection)
             self.lum.set('selected mode numbers', 1)
         
-        self.lum.set('override global monitor settings', 1)
+        self.lum.set('override global monitor settings', True)
         self.lum.set('use wavelength spacing', 1)
 
         using_source = self.lum.get('use source limits')
@@ -440,7 +447,7 @@ class LumericalFDTD(LumericalBase):
             self.lum.set('center wavelength', center_wl)
             self.lum.set('wavelength span', wl_span)
 
-        self.lum.set('frequency points', n_points)
+        self.lum.set('frequency points', num_pts)
 
     def set_expansion(self, expansion_monitor:str, power_monitor:str, port='port'):
         """
@@ -475,7 +482,7 @@ class LumericalFDTD(LumericalBase):
             monitor_type=monitor_type, 
             name=name)
 
-    def add_mode_source(self, center_wl:float, wl_span:float, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, axis='x-axis', direction='forward'):
+    def add_mode(self, center_wl:float, wl_span:float, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, axis='x-axis', direction='forward'):
         """
         Adds a mode source in the simulation. Depending on the injection axis, 
         the span along that axis will be disabled.
@@ -491,8 +498,12 @@ class LumericalFDTD(LumericalBase):
                 Either "forward" or "backward".
         """
         self.lum.addmode()
+
+        # General
         self.lum.set('injection axis', axis)
         self.lum.set('direction', direction)
+
+        # Geometry
         if axis == 'x-axis':
             if any(arg is None for arg in (y_span, z_span)):
                 raise ValueError('Input parameter <axis> selected to be "x-axis", but <y_span> and <z_span> are not given.')
@@ -517,10 +528,12 @@ class LumericalFDTD(LumericalBase):
             self.lum.set('y', y)
             self.lum.set('y span', y_span)
             self.lum.set('z', z)
+
+        # Frequency/Wavelength
         self.lum.set('center wavelength', center_wl)
         self.lum.set('wavelength span', wl_span)
 
-    def add_gauss_source(self, center_wl:float, wl_span:float, radius:float, angle:float, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, distance=0, axis='x', direction='forward'):
+    def add_gaussian(self, center_wl:float, wl_span:float, radius:float, angle:float, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, distance=0, axis='x', direction='forward', polarization_angle=0):
         """
         Adds a Gaussian source in the simulation. Uses waist radius.
 
@@ -541,8 +554,14 @@ class LumericalFDTD(LumericalBase):
                 Either "forward" or "backward".
         """
         self.lum.addgaussian()
+
+        # General
         self.lum.set('injection axis', axis)
         self.lum.set('direction', direction)
+        self.lum.set('angle theta', angle)
+        self.lum.set('polarization angle', polarization_angle)
+
+        # Geometry
         if axis == 'x':
             if any(arg is None for arg in (y_span, z_span)):
                 raise ValueError('Input parameter <axis> selected to be "x", but <y_span> and <z_span> are not given.')
@@ -568,12 +587,13 @@ class LumericalFDTD(LumericalBase):
             self.lum.set('y span', y_span)
             self.lum.set('z', z)
         
+        # Frequency/Wavelength
         self.lum.set('center wavelength', center_wl)
         self.lum.set('wavelength span', wl_span)
 
-        self.lum.set('use scalar approximation', 1)
+        # Beam options
+        self.lum.set('use scalar approximation', True)
         self.lum.set('waist radius w0', radius)
-        self.lum.set('angle theta', angle)
         self.lum.set('distance from waist', distance)
     
 class LumericalMODE(LumericalBase):
@@ -625,7 +645,7 @@ class LumericalMODE(LumericalBase):
         self.lum.setanalysis('wavelength', wl)
         self.lum.setanalysis('number of trial modes', n_modes)
 
-    def add_eme_3D(self, x_min:float, wl:float, groups:np.ndarray, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, temperature=300, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
+    def add_eme_3D(self, x_min:float, wl:float, groups:np.ndarray, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, n_modes=10, temperature=300, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
         """
         Adds an Eigenmode Expansion (EME) solver region in the simulation.
 
@@ -653,6 +673,7 @@ class LumericalMODE(LumericalBase):
         if groups.shape[0] < 1:
             raise ValueError('Input parameter <groups> must have at least 1 row.')
         self.lum.set('number of cell groups', groups.shape[0])
+        self.lum.set('number of modes for all cell groups', n_modes)
         
         if groups.shape[1] != 3:
             raise ValueError('Input parameter <groups> must have 3 columns.')

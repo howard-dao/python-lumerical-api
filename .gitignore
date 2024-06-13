@@ -7,3 +7,6 @@
 
 # ignore .npy files
 *.npy
+
+# ignore .gds files
+*.gds
