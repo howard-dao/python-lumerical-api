@@ -98,7 +98,7 @@ def linear_taper(w0:float, w1:float, length:float):
 
     return points
 
-def parabolic_taper(w0:float, w1:float, length:float, n_points=100):
+def parabolic_taper(w0:float, w1:float, length:float, num_pts=100):
     """
     Generates vertices for parabolic taper in clockwise order.
 
@@ -109,7 +109,7 @@ def parabolic_taper(w0:float, w1:float, length:float, n_points=100):
             Width of the other end of the taper.
         length : float
             Distance between both ends of the taper.
-        n_points : int
+        num_pts : int
             Number of points with which to draw one side of the taper.
 
     Returns:
@@ -119,7 +119,7 @@ def parabolic_taper(w0:float, w1:float, length:float, n_points=100):
     a = 4 * length / (w1**2 - w0**2)
     c = a * w0**2 / 4
 
-    x = np.linspace(0, length, n_points)
+    x = np.linspace(0, length, num_pts)
     y = np.sqrt((x + c) / a)
 
     # Concatenate top and bottom points
@@ -130,10 +130,40 @@ def parabolic_taper(w0:float, w1:float, length:float, n_points=100):
     
     return points
 
-def euler_taper(w0:float, w1:float, length:float, n_points=100):
+def gaussian_taper(w0:float, w1:float, length:float, num_pts=100):
+    """
+    Generates vertices for Gaussian taper in clockwise order.
+
+    Parameters:
+        w0 : float
+            Width of one end of the taper.
+        w1 : float
+            Width of the other end of the taper.
+        length : float
+            Distance between both ends of the taper.
+        num_pts : int
+            Number of points with which to draw one side of the taper.
+
+    Returns:
+        points : [N-by-2] ndarray
+            Vertices in clockwise order starting from the top left vertex.
+    """
+    zr = length / np.sqrt((w1/w0)**2 - 1)
+
+    x = np.linspace(0, length, num_pts)
+    y = w0 * np.sqrt(1 + (x/zr)**2) / 2
+
+    points_top = [(xp, yp) for xp, yp in zip(x, y)]
+    points_bot = [(xp, -yp) for xp, yp in zip(x, y)]
+    points_bot = list(reversed(points_bot))
+    points = np.array(points_top + points_bot)
+    
+    return points
+
+def euler_taper(w0:float, w1:float, theta_max:float, alpha:float, n_points=100):
     return
 
-def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, direction='counterclockwise',  n_points=100):
+def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, direction='counterclockwise',  num_pts=100):
     """
     Generates a circular arc path.
     
@@ -148,7 +178,7 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, di
             Arc start angle in degrees. Zero degrees points to the +x direction.
         direction : str, optional
             Direction of the arc from starting point.
-        n_points : int, optional
+        num_pts : int, optional
             Number of points.
 
     Returns:
@@ -175,7 +205,7 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, di
         raise ValueError(
             'Input parameter <direction> must be either "clockwise" or "counterclockwise".')
 
-    theta = np.linspace(angle_start, angle_start+angle_range, round(n_points/2))
+    theta = np.linspace(angle_start, angle_start+angle_range, round(num_pts/2))
     theta = np.deg2rad(theta-90)
 
     # Draw inner arc
@@ -202,7 +232,7 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, di
 
     return points
 
-def circular_ring(width:float, radius:float, n_points=100):
+def circular_ring(width:float, radius:float, num_pts=100):
     """
     Generates a circular ring.
     
@@ -211,7 +241,7 @@ def circular_ring(width:float, radius:float, n_points=100):
             Arc width.
         radius : float
             Arc center radius.
-        n_points : int, optional
+        num_pts : int, optional
             Number of points.
 
     Returns:
@@ -221,10 +251,10 @@ def circular_ring(width:float, radius:float, n_points=100):
         width=width, 
         radius=radius, 
         angle_range=360, 
-        n_points=n_points)
+        num_pts=num_pts)
     return points
 
-def circular_s_bend(width:float, radius:float, span:float, reflect=False, angle_start=0, n_points=100):
+def circular_s_bend(width:float, radius:float, span:float, reflect=False, angle_start=0, num_pts=100):
     """
     Generates a circular S-bend.
 
@@ -239,11 +269,11 @@ def circular_s_bend(width:float, radius:float, span:float, reflect=False, angle_
             Whether to reflect over longitudinal axis.
         angle_start : float, optional
             Longitudinal angular direction in degrees.
-        n_points : int, optional
+        num_pts : int, optional
             Number of points.
     """
-    if n_points % 2 != 0:
-        n_points += 1
+    if num_pts % 2 != 0:
+        num_pts += 1
 
     theta1 = np.rad2deg(np.arccos(np.sqrt((radius*span - span**2/4)/radius**2)))
     angle_range = 90 - theta1
@@ -254,21 +284,21 @@ def circular_s_bend(width:float, radius:float, span:float, reflect=False, angle_
         angle_range=angle_range, 
         angle_start=0, 
         direction='clockwise', 
-        n_points=n_points)
+        num_pts=num_pts)
     points2 = circular_arc(
         width=width, 
         radius=radius, 
         angle_range=angle_range, 
         angle_start=-angle_range, 
         direction='counterclockwise', 
-        n_points=n_points)
+        num_pts=num_pts)
     
     # Align the second arc with the first arc.
     theta2 = np.deg2rad(90 - angle_range)
     length = 2 * radius * np.sqrt(1 - np.sin(theta2)**2)
     points2 = _translate(points2, dx=length/2, dy=-span/2)
 
-    idx = int(n_points/2)
+    idx = int(num_pts/2)
     points = np.vstack((points1[:idx], points2[::-1], points1[idx:]))
 
     if reflect:
@@ -286,14 +316,14 @@ def _clothoid_ode_rhs(state, t, kappa0, kappa1):
     x, y, theta = state[0], state[1], state[2]
     return np.array([np.cos(theta), np.sin(theta), kappa0 + kappa1*t])
 
-def _euler_curve(min_radius:float, angle_range:float, angle_start=0, n_points=100):
+def _euler_curve(min_radius:float, angle_range:float, angle_start=0, num_pts=100):
     """
     Helper function to create an Euler curve.
     """
     x0, y0, theta0 = 0, 0, np.deg2rad(angle_start)
     thetas = np.deg2rad(angle_range)
     L = 2 * min_radius * thetas
-    t = np.linspace(0, L, n_points)
+    t = np.linspace(0, L, num_pts)
     kappa0 = 0
     kappa1 = 2 * thetas / L**2
 
@@ -307,7 +337,7 @@ def _euler_curve(min_radius:float, angle_range:float, angle_start=0, n_points=10
 
     return x, y, theta
 
-def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, direction='counterclockwise', n_points=100):
+def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, direction='counterclockwise', num_pts=100):
     """
     Generates an Euler (aka clothoidal) arc path.
 
@@ -322,7 +352,7 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, d
             Arc start angle in degrees. Zero degrees points to the +x direction.
         direction : str, optional
             Direction of the arc from starting point.
-        n_points : int, optional
+        num_pts : int, optional
             Number of points.
     """
     if min_radius <= width/2:
@@ -335,7 +365,7 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, d
         min_radius=min_radius, 
         angle_range=angle_range, 
         angle_start=angle_start, 
-        n_points=n_points)
+        num_pts=num_pts)
 
     x_inner = xt + (width/2)*np.cos(theta + np.pi/2)
     y_inner = yt + (width/2)*np.sin(theta + np.pi/2)
@@ -354,12 +384,12 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, d
 
     return points
 
-def euler_u_bend(width:float, span:float, angle=0, direction='counterclockwise', n_points=100):
+def euler_u_bend(width:float, span:float, angle=0, direction='counterclockwise', num_pts=100):
     """
     Generates an Euler 180 degree bend path.
     """
-    if n_points % 2 != 0:
-        n_points += 1
+    if num_pts % 2 != 0:
+        num_pts += 1
     if direction != 'clockwise' and direction != 'counterclockwise':
         raise ValueError(
             'Input parameter <direction> must be either "clockwise" or "counterclockwise".')
@@ -368,7 +398,7 @@ def euler_u_bend(width:float, span:float, angle=0, direction='counterclockwise',
     rad_to_span_ratio = 0.7263051699691657
     min_radius = rad_to_span_ratio * span/2
 
-    half_n_points = round(n_points/2)
+    half_n_points = round(num_pts/2)
 
     points1 = euler_arc(
         width=width, 
@@ -376,7 +406,7 @@ def euler_u_bend(width:float, span:float, angle=0, direction='counterclockwise',
         angle_range=90, 
         angle_start=0, 
         direction=direction, 
-        n_points=half_n_points)
+        num_pts=half_n_points)
     
     points2 = _reflect(points1, angle=0)
     points2 = _translate(points=points2, dy=span)
@@ -389,9 +419,9 @@ def euler_u_bend(width:float, span:float, angle=0, direction='counterclockwise',
 
     return points
 
-def euler_l_bend(width:float, min_radius:float, direction='counterclockwise', n_points=100):
-    if n_points % 2 != 0:
-        n_points += 1
+def euler_l_bend(width:float, min_radius:float, direction='counterclockwise', num_pts=100):
+    if num_pts % 2 != 0:
+        num_pts += 1
     if direction != 'clockwise' and direction != 'counterclockwise':
         raise ValueError(
             'Input parameter <direction> must be either "clockwise" or "counterclockwise".')
@@ -399,12 +429,12 @@ def euler_l_bend(width:float, min_radius:float, direction='counterclockwise', n_
     # rad_to_span_ratio = 2.5415151437386307  / 2
     # min_radius = rad_to_span_ratio * span
 
-    half_n_points = round(n_points/2)
+    half_n_points = round(num_pts/2)
 
     xt, yt, theta = _euler_curve(
         min_radius=min_radius, 
         angle_range=45, 
-        n_points=half_n_points)
+        num_pts=half_n_points)
     
     x_inner = xt + (width/2)*np.cos(theta + np.pi/2)
     y_inner = yt + (width/2)*np.sin(theta + np.pi/2)
