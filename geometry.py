@@ -160,8 +160,58 @@ def gaussian_taper(w0:float, w1:float, length:float, num_pts=100):
     
     return points
 
-def euler_taper(w0:float, w1:float, theta_max:float, alpha:float, n_points=100):
-    return
+def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, alpha:float, num_pts=100):
+    """
+    Generates vertices for Euler taper in clockwise order.
+
+    Parameters:
+        w0 : float
+            Width of one end of the taper.
+        w1 : float
+            Width of the other end of the taper.
+        theta_max : float
+        rad2dy : float
+        alpha : float
+        num_pts : int
+            Number of points with which to draw one side of the taper.
+    """
+    span1 = abs(w0/2 - w1/2)
+    min_radius1 = alpha * span1 * rad2dy
+    x1, y1, theta1 = _euler_curve(
+        min_radius=min_radius1, 
+        angle_range=theta_max, 
+        num_pts=num_pts)
+    
+    span2 = abs(w0 - w1) - span1
+    min_radius2 = (1-alpha) * span2 * rad2dy
+    x2, y2, theta2 = _euler_curve(
+        min_radius=min_radius2, 
+        angle_range=theta_max,
+        num_pts=num_pts)
+    
+    length_total = abs(x1[0] - x1[-1]) + abs(x2[0] - x2[-1])
+    span_total = abs(y1[0] - y1[-1]) + abs(y2[0] - y2[-1])
+
+    x2, y2, theta2 = -x2[::-1], -y2[::-1], theta2[::-1]
+
+    x2 = x2 + length_total
+    y2 = y2 + span_total
+
+    x3      = np.hstack((x1, x2))
+    y3      = np.hstack((y1, y2)) + w0/2
+    # theta3  = np.hstack((theta1, theta2))
+
+    x4      = x3[::-1]
+    y4      = -y3[::-1]
+    # theta4  = theta4[::-1]
+
+    xt      = np.hstack((x3, x4))
+    yt      = np.hstack((y3, y4))
+    # thetat  = np.hstack((theta3, theta4))
+
+    points = np.vstack((xt, yt)).T
+
+    return points
 
 def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, direction='counterclockwise',  num_pts=100):
     """
