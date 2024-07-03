@@ -33,7 +33,7 @@ class LumericalBase():
             case _:
                 raise TypeError('Input parameter <material> must be either a string, integer, or float.')
             
-    def _draw_box(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None):
+    def _draw_3D_box(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None):
         """
         Helper function for setting any 3D region.
         """
@@ -113,7 +113,7 @@ class LumericalBase():
         self.lum.set('name', name)
 
         # Geometry
-        self._draw_box(
+        self._draw_3D_box(
             x=x, x_span=x_span, x_min=x_min, x_max=x_max, 
             y=y, y_span=y_span, y_min=y_min, y_max=y_max, 
             z=z, z_span=z_span, z_min=z_min, z_max=z_max)
@@ -251,7 +251,7 @@ class LumericalBase():
         # Geometry settings
         dimensions = (x, x_span, x_min, x_max, y, y_span, y_min, y_max, z, z_span, z_min, z_max)
         if not all(arg is None for arg in dimensions):
-            self._draw_box(
+            self._draw_3D_box(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max, 
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max, 
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
@@ -316,7 +316,7 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('simulation time', simulation_time)
 
         # Geometry
-        self._draw_box(
+        self._draw_3D_box(
             x=x, x_span=x_span, x_min=x_min, x_max=x_max, 
             y=y, y_span=y_span, y_min=y_min, y_max=y_max, 
             z=z, z_span=z_span, z_min=z_min, z_max=z_max)
