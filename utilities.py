@@ -35,7 +35,7 @@ class LumericalBase():
             
     def _draw_3D_box(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None):
         """
-        Helper function for setting any 3D region.
+        Helper function for drawing a 3D region.
         """
         if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
             self.lum.set('x', x)
@@ -63,39 +63,74 @@ class LumericalBase():
             self.lum.set('z max', z_max)
         else:
             raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
-
-    def _set_2D_monitor(self, name:str, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D Z-Normal'):
+        
+    def _draw_2D_box_x(self, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None):
         """
-        Sets a 2D monitor's parameters, specifically, its name, monitor type, position, and size.
+        Helper function for drawing a 2D box normal to the x-axis.
         """
-        self.lum.set('name', name)
-        self.lum.set('monitor type', monitor_type)
-        if monitor_type == '2D X-normal':
-            if any(arg is None for arg in (y_span, z_span)):
-                raise ValueError('Input parameter <monitor_type> set to "2D X-normal", but <y_span> and <z_span> are not given.')
-            self.lum.set('x', x)
+        if all(isinstance(arg, (int,float)) for arg in (y, y_span)):
             self.lum.set('y', y)
             self.lum.set('y span', y_span)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        elif monitor_type == '2D Y-normal':
-            if any(arg is None for arg in (x_span, z_span)):
-                raise ValueError('Input parameter <monitor_type> set to "2D Y-normal", but <x_span> and <z_span> are not given.')
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
+        elif all(isinstance(arg, (int,float)) for arg in (y_min, y_max)):
+            self.lum.set('y min', y_min)
+            self.lum.set('y max', y_max)
         else:
-            if any(arg is None for arg in (x_span, y_span)):
-                raise ValueError('Input parameter <monitor_type> set to "2D Z-normal", but <x_span> and <y_span> are not given.')
+            raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
+        
+        if all(isinstance(arg, (int,float)) for arg in (z, z_span)):
+            self.lum.set('z', z)
+            self.lum.set('z span', z_span)
+        elif all(isinstance(arg, (int,float)) for arg in (z_min, z_max)):
+            self.lum.set('z min', z_min)
+            self.lum.set('z max', z_max)
+        else:
+            raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
+        
+    def _draw_2D_box_y(self, x=None, x_span=None, x_min=None, x_max=None, z=None, z_span=None, z_min=None, z_max=None):
+        """
+        Helper function for drawing a 2D box normal to the y-axis.
+        """
+        if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
             self.lum.set('x', x)
             self.lum.set('x span', x_span)
+        elif all(isinstance(arg, (int,float)) for arg in (x_min, x_max)):
+            self.lum.set('x min', x_min)
+            self.lum.set('x max', x_max)
+        else:
+            raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
+        
+        if all(isinstance(arg, (int,float)) for arg in (z, z_span)):
+            self.lum.set('z', z)
+            self.lum.set('z span', z_span)
+        elif all(isinstance(arg, (int,float)) for arg in (z_min, z_max)):
+            self.lum.set('z min', z_min)
+            self.lum.set('z max', z_max)
+        else:
+            raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
+        
+    def _draw_2D_box_z(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None):
+        """
+        Helper function for drawing a 2D box normal to the z-axis.
+        """
+        if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
+            self.lum.set('x', x)
+            self.lum.set('x span', x_span)
+        elif all(isinstance(arg, (int,float)) for arg in (x_min, x_max)):
+            self.lum.set('x min', x_min)
+            self.lum.set('x max', x_max)
+        else:
+            raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
+        
+        if all(isinstance(arg, (int,float)) for arg in (y, y_span)):
             self.lum.set('y', y)
             self.lum.set('y span', y_span)
-            self.lum.set('z', z)
+        elif all(isinstance(arg, (int,float)) for arg in (y_min, y_max)):
+            self.lum.set('y min', y_min)
+            self.lum.set('y max', y_max)
+        else:
+            raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
 
-    def add_rect(self, material, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, mesh_order=2, name='rectangle', alpha=0.5):
+    def add_rect(self, material, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, mesh_order=2, name='Rectangle', alpha=0.5):
         """
         Adds a rectangle object in the simulation.
 
@@ -123,7 +158,7 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
-    def add_circle(self, x:float, y:float, z_min:float, z_max:float, radius:float, axis:str, theta:float, material, mesh_order=2, name='circle', alpha=0.5):
+    def add_circle(self, x:float, y:float, z_min:float, z_max:float, radius:float, axis:str, theta:float, material, mesh_order=2, name='Circle', alpha=0.5):
         """
         Adds a cylinder object in the simulation.
 
@@ -158,7 +193,7 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
-    def add_ring(self, x:float, y:float, z_min:float, z_max:float, r_out:float, r_in:float, material, mesh_order=2, name='ring', alpha=0.5):
+    def add_ring(self, x:float, y:float, z_min:float, z_max:float, r_out:float, r_in:float, material, mesh_order=2, name='Ring', alpha=0.5):
         """
         Adds a ring object in the simulation.
 
@@ -193,7 +228,7 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
-    def add_poly(self, x:float, y:float, vertices, material, z=None, z_span=None, z_min=None, z_max=None, mesh_order=2, name='polygon', alpha=0.5):
+    def add_poly(self, x:float, y:float, vertices, material, z=None, z_span=None, z_min=None, z_max=None, mesh_order=2, name='Polygon', alpha=0.5):
         """
         Adds a polygon object in the simulation.
 
@@ -229,7 +264,7 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
-    def add_mesh(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, dx=None, dy=None, dz=None, structure=None, name='mesh'):
+    def add_mesh(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, dx=None, dy=None, dz=None, structure=None, name='Mesh'):
         """
         Adds a mesh override to a specific area or structure in the simulation.
 
@@ -274,7 +309,7 @@ class LumericalBase():
             self.lum.set('override z mesh', True)
             self.lum.set('dz', dz)
 
-    def add_index_monitor(self, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', name='index monitor'):
+    def add_index_monitor(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', name='Index Monitor'):
         """
         Adds an index monitor.
 
@@ -285,12 +320,25 @@ class LumericalBase():
                 Monitor name.
         """
         self.lum.addindex()
-        self._set_2D_monitor(
-            x=x, x_span=x_span, 
-            y=y, y_span=y_span, 
-            z=z, z_span=z_span,
-            monitor_type=monitor_type, 
-            name=name)
+
+        # General
+        self.lum.set('name', name)
+
+        # Geometry
+        if monitor_type == '2D X-normal':
+            self._draw_2D_box_x(
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Y-normal':
+            self._draw_2D_box_y(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Z-normal':
+            self._draw_2D_box_z(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+        else:
+            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
 
 class LumericalFDTD(LumericalBase):
     """
@@ -395,7 +443,7 @@ class LumericalFDTD(LumericalBase):
         self.lum.setglobalmonitor('wavelength span', wl_span)
         self.lum.setglobalmonitor('frequency points', num_pts)
 
-    def add_power_monitor(self, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', name='power monitor'):
+    def add_power_monitor(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', name='Power Monitor'):
         """
         Adds a field and power monitor in the simulation.
 
@@ -406,14 +454,29 @@ class LumericalFDTD(LumericalBase):
                 Monitor name.
         """
         self.lum.addpower()
-        self._set_2D_monitor(
-            x=x, x_span=x_span, 
-            y=y, y_span=y_span, 
-            z=z, z_span=z_span,
-            monitor_type=monitor_type, 
-            name=name)
 
-    def add_expansion_monitor(self, x:float, y:float, z:float, center_wl:float, wl_span:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', mode_selection='fundamental mode', num_pts=21, name='expansion monitor'):
+        # General
+        self.lum.set('name', name)
+
+        # Geometry
+        self.lum.set('monitor type', monitor_type)
+
+        if monitor_type == '2D X-normal':
+            self._draw_2D_box_x(
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Y-normal':
+            self._draw_2D_box_y(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Z-normal':
+            self._draw_2D_box_z(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+        else:
+            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
+
+    def add_expansion_monitor(self, center_wl:float, wl_span:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', mode_selection='fundamental mode', num_pts=21, name='Expansion Monitor'):
         """
         Adds a mode expansion monitor in the simulation.
 
@@ -428,19 +491,35 @@ class LumericalFDTD(LumericalBase):
                 Monitor name.
         """
         self.lum.addmodeexpansion()
-        self._set_2D_monitor(
-            x=x, x_span=x_span, 
-            y=y, y_span=y_span, 
-            z=z, z_span=z_span,
-            monitor_type=monitor_type, 
-            name=name)
 
+        # General
+        self.lum.set('name', name)
+
+        # Geometry
+        self.lum.set('monitor type', monitor_type)
+
+        if monitor_type == '2D X-normal':
+            self._draw_2D_box_x(
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Y-normal':
+            self._draw_2D_box_y(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Z-normal':
+            self._draw_2D_box_z(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+        else:
+            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
+
+        # Mode expansion
         if mode_selection == 'user select':
             self.lum.set('mode selection', mode_selection)
             self.lum.set('selected mode numbers', 1)
         
         self.lum.set('override global monitor settings', True)
-        self.lum.set('use wavelength spacing', 1)
+        self.lum.set('use wavelength spacing', True)
 
         using_source = self.lum.get('use source limits')
         if not using_source:
@@ -464,9 +543,9 @@ class LumericalFDTD(LumericalBase):
         self.lum.select(expansion_monitor)
         self.lum.setexpansion(port, power_monitor)
 
-    def add_movie_monitor(self, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', name='movie monitor'):
+    def add_movie_monitor(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', name='Movie Monitor'):
         """
-        Adds a movie monitor in the simulation.
+        Adds a movie monitor.
 
         Parameters:
             monitor_type : str, optional
@@ -475,14 +554,29 @@ class LumericalFDTD(LumericalBase):
                 Monitor name.
         """
         self.lum.addmovie()
-        self._set_2D_monitor(
-            x=x, x_span=x_span, 
-            y=y, y_span=y_span, 
-            z=z, z_span=z_span,
-            monitor_type=monitor_type, 
-            name=name)
 
-    def add_mode(self, center_wl:float, wl_span:float, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, axis='x-axis', direction='forward'):
+        # General
+        self.lum.set('name', name)
+
+        # Geometry
+        self.lum.set('monitor type', monitor_type)
+
+        if monitor_type == '2D X-normal':
+            self._draw_2D_box_x(
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Y-normal':
+            self._draw_2D_box_y(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Z-normal':
+            self._draw_2D_box_z(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+        else:
+            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
+
+    def add_mode(self, center_wl:float, wl_span:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, axis='x-axis', direction='forward'):
         """
         Adds a mode source in the simulation. Depending on the injection axis, 
         the span along that axis will be disabled.
@@ -505,37 +599,27 @@ class LumericalFDTD(LumericalBase):
 
         # Geometry
         if axis == 'x-axis':
-            if any(arg is None for arg in (y_span, z_span)):
-                raise ValueError('Input parameter <axis> selected to be "x-axis", but <y_span> and <z_span> are not given.')
-            self.lum.set('x', x)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
+            self._draw_2D_box_x(
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif axis == 'y-axis':
-            if any(arg is None for arg in (x_span, z_span)):
-                raise ValueError('Input parameter <axis> selected to be "y-axis", but <x_span> and <z_span> are not given.')
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
+            self._draw_2D_box_y(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif axis == 'z-axis':
+            self._draw_2D_box_z(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
         else:
-            if any(arg is None for arg in (x_span, y_span)):
-                raise ValueError('Input parameter <axis> selected to be "z-axis", but <x_span> and <y_span> are not given.')
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
+            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
 
         # Frequency/Wavelength
         self.lum.set('center wavelength', center_wl)
         self.lum.set('wavelength span', wl_span)
 
-    def add_gaussian(self, center_wl:float, wl_span:float, radius:float, angle:float, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, distance=0, axis='x', direction='forward', polarization_angle=0):
+    def add_gaussian(self, center_wl:float, wl_span:float, radius:float, angle:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, distance=0.0, axis='x', direction='forward', polarization_angle=0.0):
         """
-        Adds a Gaussian source in the simulation. Uses waist radius.
+        Adds a Gaussian source. Uses waist radius.
 
         Parameters:
             center_wl : float
@@ -563,29 +647,19 @@ class LumericalFDTD(LumericalBase):
 
         # Geometry
         if axis == 'x':
-            if any(arg is None for arg in (y_span, z_span)):
-                raise ValueError('Input parameter <axis> selected to be "x", but <y_span> and <z_span> are not given.')
-            self.lum.set('x', x)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
+            self._draw_2D_box_x(
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif axis == 'y':
-            if any(arg is None for arg in (x_span, z_span)):
-                raise ValueError('Input parameter <axis> selected to be "y", but <x_span> and <z_span> are not given.')
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
+            self._draw_2D_box_y(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif axis == 'z':
+            self._draw_2D_box_z(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
         else:
-            if any(arg is None for arg in (x_span, y_span)):
-                raise ValueError('Input parameter <axis> selected to be "z", but <x_span> and <y_span> are not given.')
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
+            raise ValueError('Input parameter <axis> must be either "x", "y", or "z".')
         
         # Frequency/Wavelength
         self.lum.set('center wavelength', center_wl)
@@ -603,44 +677,40 @@ class LumericalMODE(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
-    def add_fde(self, x:float, y:float, z:float, wl:float, x_span=None, y_span=None, z_span=None, x_min_bc='Metal', x_max_bc='Metal', y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal', solver_type='2D X normal', n_modes=4):
+    def add_fde(self, wl:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, x_min_bc='Metal', x_max_bc='Metal', y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal', solver_type='2D X normal', n_modes=4):
         """
         Adds a Finite Difference Eigenmode (FDE) solver region in the simulation.
         """
         self.lum.addfde()
+
+        # Geometry
         self.lum.set('solver type', solver_type)
         if solver_type == '2D X normal':
-            self.lum.set('x', x)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
+            self._draw_2D_box_x(
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
             self.lum.set('y min bc', y_min_bc)
             self.lum.set('y max bc', y_max_bc)
             self.lum.set('z min bc', z_min_bc)
             self.lum.set('z max bc', z_max_bc)
         elif solver_type == '2D Y normal':
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
+            self._draw_2D_box_y(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
             self.lum.set('x min bc', x_min_bc)
             self.lum.set('x max bc', x_max_bc)
             self.lum.set('z min bc', z_min_bc)
             self.lum.set('z max bc', z_max_bc)
         elif solver_type == '2D Z normal':
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-            self.lum.set('z', z)
+            self._draw_2D_box_z(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
             self.lum.set('x min bc', x_min_bc)
             self.lum.set('x max bc', x_max_bc)
             self.lum.set('y min bc', y_min_bc)
             self.lum.set('y max bc', y_max_bc)
         else:
-            raise ValueError('Input parameter <solver_type> was given incorrect setting.')
+            raise ValueError('Input parameter <solver_type> must be either "2D X normal", "2D Y normal", or "2D Z normal".')
         
         self.lum.setanalysis('wavelength', wl)
         self.lum.setanalysis('number of trial modes', n_modes)
@@ -717,17 +787,63 @@ class LumericalMODE(LumericalBase):
         self.lum.set('z min bc', z_min_bc)
         self.lum.set('z max bc', z_max_bc)
 
-    def add_eme_profile_monitor(self, x:float, y:float, z:float, x_span=None, y_span=None, z_span=None, monitor_type='2D X-normal', name='profile monitor'):
+    def add_eme_profile_monitor(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', name='Profile Monitor'):
         """
         Adds a profile monitor for an EME solver region.
         """
         self.lum.addemeprofile()
-        self._set_2D_monitor(
-            x=x, x_span=x_span, 
-            y=y, y_span=y_span, 
-            z=z, z_span=z_span,
-            monitor_type=monitor_type, 
-            name=name)
+
+        # General
+        self.lum.set('name', name)
+
+        # Geometry
+        self.lum.set('monitor type', monitor_type)
+
+        if monitor_type == '2D X-normal':
+            self._draw_2D_box_x(
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Y-normal':
+            self._draw_2D_box_y(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Z-normal':
+            self._draw_2D_box_z(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+        else:
+            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
+        
+    def add_varfdtd(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, simulation_time=1000e-15, x0=0.0, y0=0.0, index_method='variational', polarization='E mode (TE)', mesh_accuracy=2, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='Metal', z_max_bc='Metal'):
+
+        self.lum.addvarfdtd()
+
+        # General
+        self.lum.set('simulation time', simulation_time)
+
+        # Geometry
+        self._draw_3D_box(
+            x=x, x_span=x_span, x_min=x_min, x_max=x_max, 
+            y=y, y_span=y_span, y_min=y_min, y_max=y_max, 
+            z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        
+        # Effective index
+        self.lum.set('x0', x0)
+        self.lum.set('y0', y0)
+        self.lum.set('effective index method', index_method)
+        self.lum.set('polarization', polarization)
+        
+        # Mesh settings
+        self.lum.set('mesh accuracy', mesh_accuracy)
+
+        # Boundary conditions
+        self.lum.set('x min bc', x_min_bc)
+        self.lum.set('x max bc', x_max_bc)
+        self.lum.set('y min bc', y_min_bc)
+        self.lum.set('y max bc', y_max_bc)
+        self.lum.set('z min bc', z_min_bc)
+        self.lum.set('z max bc', z_max_bc)
+
 
 class LumericalHEAT(LumericalBase):
     """
