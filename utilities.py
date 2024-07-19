@@ -4,6 +4,7 @@ Author(s): Howard Dao
 """
 
 import numpy as np
+from scipy.constants import electron_volt
 
 class LumericalBase():
     def __init__(self, lum) -> None:
@@ -815,6 +816,9 @@ class LumericalMODE(LumericalBase):
             raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
         
     def add_varfdtd(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, simulation_time=1000e-15, x0=0.0, y0=0.0, index_method='variational', polarization='E mode (TE)', mesh_accuracy=2, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='Metal', z_max_bc='Metal'):
+        """
+        Adds a 2.5D FDTD (varFDTD) solver region.
+        """
 
         self.lum.addvarfdtd()
 
@@ -858,3 +862,108 @@ class LumericalCHARGE(LumericalBase):
     """
     def __init__(self, lum) -> None:
         super().__init__(lum)
+
+    def add_3D_charge(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, name='CHARGE Region'):
+        """
+        Adds a 3D CHARGE solver region.
+        """
+        
+        self.lum.select('simulation region')
+
+        # General
+        self.lum.set('name', name)
+        self.lum.set('dimension', '3D')
+
+        # Geometry
+        self._draw_3D_box(
+            x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+            y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+            z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+    
+    def add_2d_charge(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, dimension='2D X-Normal', name='CHARGE Region'):
+        """
+        Adds a 2D CHARGE solver region.
+        """
+
+        self.lum.select('simulation region')
+
+        # General
+        self.lum.set('name', name)
+        self.lum.set('dimension', dimension)
+
+        # Geometry
+        if dimension == '2D X-normal':
+            self._draw_2D_box_x(
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif dimension == '2D Y-normal':
+            self._draw_2D_box_y(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif dimension == '2D Z-normal':
+            self._draw_2D_box_z(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+        else:
+            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
+        
+    def add_charge_solver(self, solver_mode='steady state', temperature_dependence='isothermal', temperature=300):
+        """
+        Adds a CHARGE solver. Required for CHARGE monitors to be added.
+
+        Parameters:
+            solver_mode : str, optional
+            temperature_dependence : str, optional
+            temperature : float, optional
+        """
+
+        self.lum.addchargesolver()
+
+        # General
+        self.lum.set('solver mode', solver_mode)
+        self.lum.set('temperature dependence', temperature_dependence)
+        self.lum.set('simulation temperature', temperature)
+
+    def add_charge_monitor(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D x-normal', name='Charge Monitor'):
+        """
+        Adds a CHARGE monitor.
+        """
+
+        self.lum.addchargemonitor()
+
+        # General
+        self.lum.set('name', name)
+        self.lum.set('monitor type', monitor_type)
+
+        # Geometry
+        if monitor_type == '2D x-normal':
+            self._draw_2D_box_x(
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D y-normal':
+            self._draw_2D_box_y(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D z-normal':
+            self._draw_2D_box_z(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+        else:
+            raise ValueError('Input parameter <monitor_type> must be either "2D x-normal", "2D y-normal", or "2D z-normal".')
+        
+    def get_capacitance(self, monitor_name:str):
+        """
+        Returns the capacitance.
+        """
+        charge = self.lum.getresult(monitor_name, 'total_charge')
+
+        Qn = electron_volt * charge['n']
+        Qp = electron_volt * charge['p']
+        V = charge['V_drain']
+        L = len(V)
+
+        Cn = (Qn[1:L] - Qn[0:L-1]) / (V[1] - V[0])
+        Cp = (Qp[1:L] - Qp[0:L-1]) / (V[1] - V[0])
+        Vmid = (V[0:L-1] + V[1:L]) / 2
+
+        return Vmid, Cn, Cp
