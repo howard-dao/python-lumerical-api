@@ -157,7 +157,7 @@ def gaussian_taper(w0:float, w1:float, length:float, num_pts=100):
     
     return vertices
 
-def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, alpha:float, num_pts=100):
+def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, alpha=0.5, num_pts=100):
     """
     Generates vertices for Euler taper in clockwise order.
 
@@ -170,7 +170,7 @@ def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, alpha:float, 
             Maximum taper half-angle in degrees. This angle occurs at the turning point.
         rad2dy : float
             Ratio between minimum bend radius to vertical displacement.
-        alpha : float
+        alpha : float, optional
             Normalized position along taper length where the minimum bend radius occurs. Must be a value between 0 and 1.
         num_pts : int
             Number of vertices on one side of the shape.
@@ -212,7 +212,7 @@ def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, alpha:float, 
     x2 = x2 + length_total
     y2 = y2 + span_total
 
-    # Combine first and last part of the top half of taper
+    # Combine first and last parts of the top half of taper
     x3 = np.hstack((x1,x2))
     y3 = np.hstack((y1,y2))
 
@@ -239,7 +239,7 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, di
     
     Parameters:
         width : float
-            Arc width.
+            Path width.
         radius : float
             Arc center radius.
         angle_range : float
@@ -324,7 +324,7 @@ def circular_ring(width:float, radius:float, num_pts=100):
         num_pts=num_pts)
     return points
 
-def circular_s_bend(width:float, radius:float, span:float, reflect=False, num_pts=100):
+def circular_s_bend(width:float, radius:float, span:float, angle:float, reflect=False, num_pts=100):
     """
     Generates a circular S-bend.
 
@@ -438,7 +438,7 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, d
 
     Parameters:
         width : float
-            Arc width.
+            Path width.
         min_radius : float
             Minimum radius of curvature.
         angle_range : float
@@ -481,13 +481,81 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, d
 
     return vertices
 
+def euler_s_bend(width:float, rad2dy:float, theta_max:float, span:float, reflect=False, num_pts=100):
+    """
+    Generates an Euler S-bend.
+
+    Parameters:
+        width : float
+            Path width.
+        rad2dy : float
+            Ratio between minimum bend radius to vertical displacement.
+        theta_max : float
+            Maximum angle made by bend in degrees. Occurs at the turning point.
+        span : float
+            Distance between input and output.
+        reflect : bool, optional
+            Whether to reflect over longitudinal axis.
+        num_pts : int, optional
+            Number of points on one side of the shape.
+
+    Returns:
+        [N-by-2] ndarray : Shape vertices.
+    """
+    min_radius = rad2dy * span/2
+
+    half_num_pts = int(num_pts/2)
+
+    # First part of curve before turning point
+    x1, y1, theta1 = _euler_curve(
+        min_radius=min_radius,
+        angle_range=theta_max,
+        num_pts=half_num_pts)
+
+    # Last part of curve after turning point
+    x2, y2, theta2 = -x1[::-1], -y1[::-1], theta1[::-1]
+
+    dx = 2 * x1[-1]
+    dy = 2 * y1[-1]
+
+    x2 = x2 + dx
+    y2 = y2 + dy
+
+    # Combine first and last parts
+    x3 = np.hstack((x1, x2))
+    y3 = np.hstack((y1, y2))
+    theta3 = np.hstack([theta1, theta2])
+
+    # Since rad2dy is calculated via curve-fitting, correct for the error in the y coordinates by scaling.
+    y_error = span / y3[-1]
+    y3 *= y_error
+
+    # Split curve to create top and bottom sides
+    x_top = x3 + (width/2)*np.cos(theta3 + np.pi/2)
+    y_top = y3 + (width/2)*np.sin(theta3 + np.pi/2)
+
+    x_bot = x3 + (width/2)*np.cos(theta3 - np.pi/2)
+    y_bot = y3 + (width/2)*np.sin(theta3 - np.pi/2)
+
+    # Combine top and bottom halves
+    xt = np.hstack((x_top, x_bot[::-1]))
+    yt = np.hstack((y_top, y_bot[::-1]))
+
+    vertices = np.vstack((xt,yt)).T
+
+    # Flip upside down if true
+    if reflect:
+        vertices = _reflect(vertices=vertices, angle=0)
+
+    return vertices
+
 def euler_u_bend(width:float, span:float, direction='counterclockwise', num_pts=100):
     """
     Generates an Euler 180 degree bend path.
 
     Parameters:
         width : float
-            Arc path width.
+            Path width.
         span : float
             Distance between input and output.
         direction : str
@@ -521,13 +589,13 @@ def euler_u_bend(width:float, span:float, direction='counterclockwise', num_pts=
     verts2 = _reflect(verts1, angle=0)
     verts2 = _translate(vertices=verts2, dy=span)
     
-    verts = np.vstack((
+    vertices = np.vstack((
         verts1[:half_num_pts-1], 
-        verts2[half_num_pts-1::-1], 
-        verts2[-1:half_num_pts:-1], 
+        verts2[half_num_pts-1::-1],
+        verts2[-1:half_num_pts:-1],
         verts1[half_num_pts:]))
 
-    return verts
+    return vertices
 
 def euler_l_bend(width:float, min_radius:float, direction='counterclockwise', num_pts=100):
     """
