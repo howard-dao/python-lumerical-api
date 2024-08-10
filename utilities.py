@@ -699,7 +699,7 @@ class LumericalMODE(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
-    def add_fde(self, wl:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, x_min_bc='Metal', x_max_bc='Metal', y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal', solver_type='2D X normal', n_modes=4):
+    def add_fde(self, wl:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, x_min_bc='Metal', x_max_bc='Metal', y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal', solver_type='2D X normal', num_modes=4):
         """
         Adds a Finite Difference Eigenmode (FDE) solver region in the simulation.
         """
@@ -735,9 +735,9 @@ class LumericalMODE(LumericalBase):
             raise ValueError('Input parameter <solver_type> must be either "2D X normal", "2D Y normal", or "2D Z normal".')
         
         self.lum.setanalysis('wavelength', wl)
-        self.lum.setanalysis('number of trial modes', n_modes)
+        self.lum.setanalysis('number of trial modes', num_modes)
 
-    def add_eme_3D(self, x_min:float, wl:float, groups:np.ndarray, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, n_modes=10, temperature=300, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
+    def add_eme_3D(self, x_min:float, wl:float, groups:np.ndarray, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, num_modes=10, temperature=300, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
         """
         Adds an Eigenmode Expansion (EME) solver region in the simulation.
 
@@ -765,7 +765,7 @@ class LumericalMODE(LumericalBase):
         if groups.shape[0] < 1:
             raise ValueError('Input parameter <groups> must have at least 1 row.')
         self.lum.set('number of cell groups', groups.shape[0])
-        self.lum.set('number of modes for all cell groups', n_modes)
+        self.lum.set('number of modes for all cell groups', num_modes)
         
         if groups.shape[1] != 3:
             raise ValueError('Input parameter <groups> must have 3 columns.')
@@ -802,12 +802,35 @@ class LumericalMODE(LumericalBase):
             self.lum.set('z max', z_max)
         else:
             raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
+        
+        self.lum.set('display cells', True)
 
         # Boundary conditions
         self.lum.set('y min bc', y_min_bc)
         self.lum.set('y max bc', y_max_bc)
         self.lum.set('z min bc', z_min_bc)
         self.lum.set('z max bc', z_max_bc)
+
+    def create_beam(self, radius:float, direction='2D X normal', distance=0.0):
+        """
+        Creates a gaussian beam profile.
+
+        Parameters:
+            radius : float
+                Waist radius in meters.
+            direction : str, optional
+                Beam direction. Either '2D X normal', '2D Y normal', or '2D Z normal'.
+            distance : float, optional
+                Distance from waist in meters.
+        """
+        self.lum.setanalysis('use fully vectorial thin lens beam profile', False)
+        
+        self.lum.setanalysis('beam direction', direction)
+        self.lum.setanalysis('define gaussian beam by', 'waist size and position')
+        self.lum.setanalysis('waist radius', radius)
+        self.lum.setanalysis('distance from waist', distance)
+        
+        self.lum.createbeam()
 
     def add_eme_profile_monitor(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', name='Profile Monitor'):
         """
