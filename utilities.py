@@ -65,10 +65,12 @@ class LumericalBase():
         else:
             raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
         
-    def _draw_2D_box_x(self, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None):
+    def _draw_2D_box_x(self, x:float, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None):
         """
         Helper function for drawing a 2D box normal to the x-axis.
         """
+        self.lum.set('x', x)
+
         if all(isinstance(arg, (int,float)) for arg in (y, y_span)):
             self.lum.set('y', y)
             self.lum.set('y span', y_span)
@@ -87,10 +89,12 @@ class LumericalBase():
         else:
             raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
         
-    def _draw_2D_box_y(self, x=None, x_span=None, x_min=None, x_max=None, z=None, z_span=None, z_min=None, z_max=None):
+    def _draw_2D_box_y(self, y:float, x=None, x_span=None, x_min=None, x_max=None, z=None, z_span=None, z_min=None, z_max=None):
         """
         Helper function for drawing a 2D box normal to the y-axis.
         """
+        self.lum.set('y', y)
+
         if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
             self.lum.set('x', x)
             self.lum.set('x span', x_span)
@@ -109,10 +113,12 @@ class LumericalBase():
         else:
             raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
         
-    def _draw_2D_box_z(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None):
+    def _draw_2D_box_z(self, z:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None):
         """
         Helper function for drawing a 2D box normal to the z-axis.
         """
+        self.lum.set('z', z)
+
         if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
             self.lum.set('x', x)
             self.lum.set('x span', x_span)
@@ -464,16 +470,19 @@ class LumericalFDTD(LumericalBase):
 
         if monitor_type == '2D X-normal':
             self._draw_2D_box_x(
+                x=x,
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif monitor_type == '2D Y-normal':
             self._draw_2D_box_y(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y,
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif monitor_type == '2D Z-normal':
             self._draw_2D_box_z(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z)
         else:
             raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
 
@@ -501,16 +510,19 @@ class LumericalFDTD(LumericalBase):
 
         if monitor_type == '2D X-normal':
             self._draw_2D_box_x(
+                x=x,
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif monitor_type == '2D Y-normal':
             self._draw_2D_box_y(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y,
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif monitor_type == '2D Z-normal':
             self._draw_2D_box_z(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z)
         else:
             raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
 
@@ -564,16 +576,19 @@ class LumericalFDTD(LumericalBase):
 
         if monitor_type == '2D X-normal':
             self._draw_2D_box_x(
+                x=x,
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif monitor_type == '2D Y-normal':
             self._draw_2D_box_y(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y,
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif monitor_type == '2D Z-normal':
             self._draw_2D_box_z(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z)
         else:
             raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
 
@@ -601,16 +616,19 @@ class LumericalFDTD(LumericalBase):
         # Geometry
         if axis == 'x-axis':
             self._draw_2D_box_x(
+                x=x,
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif axis == 'y-axis':
             self._draw_2D_box_y(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y,
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif axis == 'z-axis':
             self._draw_2D_box_z(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z)
         else:
             raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
 
@@ -649,16 +667,19 @@ class LumericalFDTD(LumericalBase):
         # Geometry
         if axis == 'x':
             self._draw_2D_box_x(
+                x=x,
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif axis == 'y':
             self._draw_2D_box_y(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y,
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif axis == 'z':
             self._draw_2D_box_z(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z)
         else:
             raise ValueError('Input parameter <axis> must be either "x", "y", or "z".')
         
