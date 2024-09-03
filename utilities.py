@@ -334,16 +334,19 @@ class LumericalBase():
         # Geometry
         if monitor_type == '2D X-normal':
             self._draw_2D_box_x(
+                x=x,
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif monitor_type == '2D Y-normal':
             self._draw_2D_box_y(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y,
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         elif monitor_type == '2D Z-normal':
             self._draw_2D_box_z(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-                y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z)
         else:
             raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
 
@@ -354,11 +357,12 @@ class LumericalFDTD(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
-    def add_fdtd_3D(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='PML', z_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
+    def add_fdtd_3D(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, background_material=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='PML', z_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
         """
         Adds a 3D FDTD simulation region.
 
         Parameters:
+            background : str or float
             mesh_accuracy : int, optional
                 Mesh resolution.
             simulation_time : float, optional
@@ -369,6 +373,16 @@ class LumericalFDTD(LumericalBase):
         # General
         self.lum.set('dimension', '3D')
         self.lum.set('simulation time', simulation_time)
+        match background_material:
+            case str():
+                if self.lum.materialexists(background_material):
+                    self.lum.set('background material', background_material)
+                else:
+                    raise ValueError('Input parameter <background_material> does not match any material in database.')
+            case int() | float():
+                self.lum.set('index', background_material)
+            case _:
+                raise TypeError('Input parameter <background_material> must be either a string, integer, or float.')
 
         # Geometry
         self._draw_3D_box(
@@ -387,15 +401,31 @@ class LumericalFDTD(LumericalBase):
         # Mesh Settings
         self.lum.set('mesh accuracy', mesh_accuracy)
 
-    def add_fdtd_2D(self, z:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
+    def add_fdtd_2D(self, z:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, background_material=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
         """
         Adds a 2D FDTD simulation area.
+
+        Parameters:
+            mesh_accuracy : int, optional
+                Mesh resolution.
+            simulation_time : float, optional
+                Maximum duration of a simulation in seconds.
         """
         self.lum.addfdtd()
 
         # General
         self.lum.set('dimension', '2D')
         self.lum.set('simulation time', simulation_time)
+        match background_material:
+            case str():
+                if self.lum.materialexists(background_material):
+                    self.lum.set('background material', background_material)
+                else:
+                    raise ValueError('Input parameter <background_material> does not match any material in database.')
+            case int() | float():
+                self.lum.set('index', background_material)
+            case _:
+                raise TypeError('Input parameter <background_material> must be either a string, integer, or float.')
 
         # Geometry
         if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
@@ -636,7 +666,7 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('center wavelength', center_wl)
         self.lum.set('wavelength span', wl_span)
 
-    def add_gaussian(self, center_wl:float, wl_span:float, radius:float, angle:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, distance=0.0, axis='x', direction='forward', polarization_angle=0.0):
+    def add_gaussian(self, center_wl:float, wl_span:float, radius:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, angle=0.0, axis='x', direction='forward', polarization_angle=0.0, distance=0.0,):
         """
         Adds a Gaussian source. Uses waist radius.
 
@@ -649,12 +679,12 @@ class LumericalFDTD(LumericalBase):
                 Waist radius in meters.
             angle : float
                 Angular direction in degrees.
-            distance : float, optional
-                Distance from waist in meters. Positive distance corresponds to a diverging beam, and negative distance corresponds to a converging beam.
             axis : str, optional
                 Propagation axis ("x", "y", or "z").
             direction : str, optional
                 Either "forward" or "backward".
+            distance : float, optional
+                Distance from waist in meters. Positive distance corresponds to a diverging beam, and negative distance corresponds to a converging beam.
         """
         self.lum.addgaussian()
 
