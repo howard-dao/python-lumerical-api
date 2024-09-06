@@ -75,7 +75,7 @@ def _rotate(vertices:np.ndarray, angle:float, origin=[0,0]):
 
     return new_vertices
 
-def linear_taper(w0:float, w1:float, length:float):
+def linear_taper(w0:float, w1:float, length:float, num_pts=2):
     """
     Generates vertices for linear taper in clockwise order.
 
@@ -86,14 +86,26 @@ def linear_taper(w0:float, w1:float, length:float):
             Width of the other end of the taper.
         length : float
             Distance between both ends of the taper.
+        num_pts : int, optional
+            Number of vertices on one side of the shape.
 
     Returns:
-        [N-by-2] ndarray : Rotated vertices.
+        [N-by-2] ndarray : Shape vertices.
     """
-    x = [0, length, length, 0]
-    y = [w0/2, w1/2, -w1/2, -w0/2]
+    if num_pts < 2:
+        raise ValueError(f'Input parameter <num_pts> must be at least 2, but was given a value of {num_pts}.')
+    if num_pts % 2 != 0:
+        num_pts += 1
 
-    vertices = np.vstack((x,y)).T
+    slope = (w1-w0)/2 / length
+    x = np.linspace(0, length, num_pts)
+    y = slope*x + w0/2
+
+    # Concatenate top and bottom vertices
+    verts_top = np.vstack((x,y)).T
+    verts_bot = np.vstack((x,-y)).T
+    verts_bot = verts_bot[::-1]
+    vertices = np.vstack((verts_top, verts_bot))
 
     return vertices
 
@@ -112,15 +124,18 @@ def parabolic_taper(w0:float, w1:float, length:float, num_pts=100):
             Number of points on one side of the shape.
 
     Returns:
-        [N-by-2] ndarray : Rotated vertices.
+        [N-by-2] ndarray : Shape vertices.
     """
+    if num_pts % 2 != 0:
+        num_pts += 1
+
     a = 4 * length / (w1**2 - w0**2)
     c = a * w0**2 / 4
 
     x = np.linspace(0, length, num_pts)
     y = np.sqrt((x + c) / a)
 
-    # Concatenate top and bottom points
+    # Concatenate top and bottom vertices
     verts_top = np.vstack((x,y)).T
     verts_bot = np.vstack((x,-y)).T
     verts_bot = verts_bot[::-1]
@@ -143,13 +158,18 @@ def gaussian_taper(w0:float, w1:float, length:float, num_pts=100):
             Number of vertices on one side of the shape.
 
     Returns:
-        [N-by-2] ndarray : Rotated vertices.
+        [N-by-2] ndarray : Shape vertices.
     """
+    if num_pts % 2 != 0:
+        num_pts += 1
+
+    # Rayleigh range
     zr = length / np.sqrt((w1/w0)**2 - 1)
 
     x = np.linspace(0, length, num_pts)
     y = w0 * np.sqrt(1 + (x/zr)**2) / 2
 
+    # Concatenate top and bottom vertices
     verts_top = np.vstack((x,y)).T
     verts_bot = np.vstack((x,-y)).T
     verts_bot = verts_bot[::-1]
@@ -157,7 +177,7 @@ def gaussian_taper(w0:float, w1:float, length:float, num_pts=100):
     
     return vertices
 
-def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, alpha=0.5, num_pts=100):
+def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, length=None, alpha=0.5, num_pts=100):
     """
     Generates vertices for Euler taper in clockwise order.
 
@@ -170,13 +190,15 @@ def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, alpha=0.5, nu
             Maximum taper half-angle in degrees. This angle occurs at the turning point.
         rad2dy : float
             Ratio between minimum bend radius to vertical displacement.
+        length : int or float, optional
+            Distance between both ends of the taper.
         alpha : float, optional
             Normalized position along taper length where the minimum bend radius occurs. Must be a value between 0 and 1.
         num_pts : int
             Number of vertices on one side of the shape.
 
     Returns:
-        [N-by-2] ndarray : Rotated vertices.
+        [N-by-2] ndarray : Shape vertices.
 
     Raises:
         ValueError: <w0> is less than <w1>.
@@ -216,8 +238,16 @@ def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, alpha=0.5, nu
     x3 = np.hstack((x1,x2))
     y3 = np.hstack((y1,y2))
 
+    dx = x3[-1]
+    dy = y3[-1]
+
+    # If <length> is given, scale along x axis
+    if isinstance(length, (int, float)):
+        x_error = length / dx
+        x3 *= x_error
+
     # Since rad2dy is calculated via curve-fitting, correct for the error in the y coordinates by scaling.
-    y_error = span1 / y3[-1]
+    y_error = span1 / dy
     y3 *= y_error
     y3 += w0/2
 
@@ -233,7 +263,19 @@ def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, alpha=0.5, nu
 
     return vertices
 
-def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, direction='counterclockwise',  num_pts=100):
+def _circular_curve(radius:float, angle_range:float, angle_start=0.0, num_pts=100):
+    """
+    Helper function to create a circular curve.
+    """
+    theta = np.linspace(angle_start, angle_start+angle_range, num_pts)
+    theta = np.deg2rad(theta)
+
+    x = radius * np.cos(theta)
+    y = radius * np.sin(theta)
+
+    return x, y, theta
+
+def circular_arc(width:float, radius:float, angle_range:float, angle_start=0.0, direction='counterclockwise',  num_pts=100):
     """
     Generates a circular arc path.
     
@@ -265,7 +307,7 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0, di
     # Check parameters
     if inner_radius <= 0:
         raise ValueError(
-            'Input parameter <width> must be less than 2*<radius>.')
+            'Input parameter <width> must be positive.')
     if angle_range <= 0 or angle_range > 360:
         raise ValueError(
             'Input parameter <angle_range> must be between 0 and 360.')
@@ -345,6 +387,8 @@ def circular_s_bend(width:float, radius:float, span:float, angle:float, reflect=
     """
     if num_pts % 2 != 0:
         num_pts += 1
+    if 2*radius < span:
+        raise ValueError('Input parameter <radius> must be greater than <span>/2.')
 
     theta1 = np.rad2deg(np.arccos(np.sqrt((radius*span - span**2/4)/radius**2)))
     angle_range = 90 - theta1
@@ -395,10 +439,40 @@ def circular_u_bend(width:float, span:float, direction='counterclockwise', num_p
     Returns:
         [N-by-2] ndarray : Rotated vertices.
     """
+    if num_pts % 2 != 0:
+        num_pts += 1
+
     vertices = circular_arc(
         width=width,
         radius=span/2,
         angle_range=180,
+        angle_start=0,
+        direction=direction,
+        num_pts=num_pts)
+    return vertices
+
+def circular_l_bend(width:float, radius:float, direction='counterclockwise', num_pts=100):
+    """
+    Parameters:
+        width : float
+            Path width.
+        span : float
+            Distance between input and output.
+        direction : str
+            Either "clockwise" or "counterclockwise".
+        num_pts : int
+            Number of vertices on one side of the taper.
+
+    Returns:
+        [N-by-2] ndarray : Rotated vertices.
+    """
+    if num_pts % 2 != 0:
+        num_pts += 1
+
+    vertices = circular_arc(
+        width=width,
+        radius=radius,
+        angle_range=90,
         angle_start=0,
         direction=direction,
         num_pts=num_pts)
@@ -411,7 +485,7 @@ def _clothoid_ode_rhs(state, t, kappa0, kappa1):
     x, y, theta = state[0], state[1], state[2]
     return np.array([np.cos(theta), np.sin(theta), kappa0 + kappa1*t])
 
-def _euler_curve(min_radius:float, angle_range:float, angle_start=0, num_pts=100):
+def _euler_curve(min_radius:float, angle_range:float, angle_start=0.0, num_pts=100):
     """
     Helper function to create an Euler curve.
     """
@@ -432,7 +506,7 @@ def _euler_curve(min_radius:float, angle_range:float, angle_start=0, num_pts=100
 
     return x, y, theta
 
-def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, direction='counterclockwise', num_pts=100):
+def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0.0, direction='counterclockwise', num_pts=100):
     """
     Generates an Euler (aka clothoidal) arc path.
 
@@ -481,7 +555,7 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0, d
 
     return vertices
 
-def euler_s_bend(width:float, rad2dy:float, theta_max:float, span:float, reflect=False, num_pts=100):
+def euler_s_bend(width:float, rad2dy:float, theta_max:float, span:float, length=None, reflect=False, num_pts=100):
     """
     Generates an Euler S-bend.
 
@@ -493,7 +567,9 @@ def euler_s_bend(width:float, rad2dy:float, theta_max:float, span:float, reflect
         theta_max : float
             Maximum angle made by bend in degrees. Occurs at the turning point.
         span : float
-            Distance between input and output.
+            Transverse distance between input and output.
+        length : int or float, optional
+            Longitudinal distance between input and output. 
         reflect : bool, optional
             Whether to reflect over longitudinal axis.
         num_pts : int, optional
@@ -525,6 +601,11 @@ def euler_s_bend(width:float, rad2dy:float, theta_max:float, span:float, reflect
     x3 = np.hstack((x1, x2))
     y3 = np.hstack((y1, y2))
     theta3 = np.hstack([theta1, theta2])
+
+    # If <length> is given, scale along x axis
+    if isinstance(length, (int,float)):
+        x_error = length / dx
+        x3 *= x_error
 
     # Since rad2dy is calculated via curve-fitting, correct for the error in the y coordinates by scaling.
     y_error = span / y3[-1]
@@ -597,7 +678,7 @@ def euler_u_bend(width:float, span:float, direction='counterclockwise', num_pts=
 
     return vertices
 
-def euler_l_bend(width:float, min_radius:float, direction='counterclockwise', num_pts=100):
+def euler_l_bend(width:float, min_radius:float, span=None, direction='counterclockwise', num_pts=100):
     """
     Generates an Euler 90 degree bend.
 
@@ -622,11 +703,45 @@ def euler_l_bend(width:float, min_radius:float, direction='counterclockwise', nu
 
     half_num_pts = round(num_pts/2)
 
-    xt, yt, theta = _euler_curve(
+    x1, y1, theta1 = _euler_curve(
         min_radius=min_radius, 
         angle_range=45, 
         num_pts=half_num_pts)
     
+    dx = max(x1) - min(x1)
+    dy = max(y1) - min(y1)
+
+    # First half
+    curve_pts_1 = np.vstack((x1, y1)).T
+
+    # Second half
+    curve_pts_2 = _reflect(
+        vertices=curve_pts_1[::-1],
+        angle=0)
+    curve_pts_2 = _rotate(
+        vertices=curve_pts_2,
+        angle=-90)
+    curve_pts_2 = _translate(
+        vertices=curve_pts_2,
+        dx=dx+dy,
+        dy=dx+dy)
+    
+    # Combine both halves
+    curve_pts = np.vstack((curve_pts_1, curve_pts_2))
+    xt, yt = curve_pts[:,0], curve_pts[:,1]
+
+    # Calculate angles
+    theta2 = np.pi/2 - theta1[::-1]
+    theta = np.hstack((theta1, theta2))
+    
+    # Resize if <span> is given
+    if isinstance(span, (int, float)):
+        x_error = span / xt[-1]
+        y_error = span / yt[-1]
+        xt *= x_error
+        yt *= y_error
+
+    # Add width to curve
     x_inner = xt + (width/2)*np.cos(theta + np.pi/2)
     y_inner = yt + (width/2)*np.sin(theta + np.pi/2)
 
@@ -636,16 +751,6 @@ def euler_l_bend(width:float, min_radius:float, direction='counterclockwise', nu
     x = np.hstack((x_inner, x_outer[::-1]))
     y = np.hstack((y_inner, y_outer[::-1]))
 
-    verts1 = np.vstack((x,y)).T
-
-    verts2 = _reflect(verts1, angle=0)
-    verts2 = _rotate(verts2, angle=-90)
-    verts2 = _translate(verts2, dx=max(xt)+max(yt), dy=max(xt)+max(yt))
-
-    vertices = np.vstack((
-        verts1[:half_num_pts-1], 
-        verts2[half_num_pts-1::-1], 
-        verts2[-1:half_num_pts:-1], 
-        verts1[half_num_pts:]))
+    vertices = np.vstack((x, y)).T
     
     return vertices
