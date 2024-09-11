@@ -368,7 +368,8 @@ class LumericalFDTD(LumericalBase):
         Adds a 3D FDTD simulation region.
 
         Parameters:
-            background : str or float
+            background_material : str or float
+                If float, sets material index; if string, sets material to library material.
             mesh_accuracy : int, optional
                 Mesh resolution.
             simulation_time : float, optional
