@@ -11,16 +11,19 @@ def _translate(vertices:np.ndarray, dx=0, dy=0):
     """
     Translates vertices along either x and y directions.
 
-    Parameters:
-        vertices : [N-by-2] ndarray
-            Shape vertices.
-        dx : float, optional
-            Distance along x.
-        dy : float, optional
-            Distance along y.
+    Parameters
+    ----------
+    vertices : ndarray
+        Shape vertices.
+    dx : float, optional
+        Distance along x.
+    dy : float, optional
+        Distance along y.
 
-    Returns:
-        [N-by-2] array : Translated vertices.
+    Returns
+    ----------
+    new_vertices : ndarray
+        Shape vertices.
     """
     new_vertices = copy.copy(vertices)
     new_vertices[:,0] += dx
@@ -32,14 +35,17 @@ def _reflect(vertices:np.ndarray, angle:float):
     """
     Reflects vertices with respect to a given angle.
 
-    Parameters:
-        vertices : [N-by-2] ndarray
-            Shape vertices.
-        angle : float
-            Angle over which to reflect vertices in degrees.
+    Parameters
+    ----------
+    vertices : ndarray
+        Shape vertices.
+    angle : float
+        Angle over which to reflect vertices in degrees.
 
-    Returns:
-        [N-by-2] array : Reflected vertices.
+    Returns
+    ----------
+    new_vertices : ndarray
+        Shape vertices.
     """
     angle = np.deg2rad(angle)
     matrix = np.array([[np.cos(2*angle), np.sin(2*angle)],
@@ -52,16 +58,19 @@ def _rotate(vertices:np.ndarray, angle:float, origin=[0,0]):
     """
     Rotates a shape counterclockwise about an origin point.
 
-    Parameters:
-        vertices : [N-by-2] ndarray
-            Shape vertices.
-        angle : float
-            Angle of rotation in degrees.
-        origin : [1-by-2] array-like
-            Point about which to rotate.
+    Parameters
+    ----------
+    vertices : ndarray
+        Shape vertices.
+    angle : float
+        Angle of rotation in degrees.
+    origin : [1-by-2] array-like
+        Point about which to rotate.
 
-    Returns:
-        [N-by-2] ndarray : Rotated vertices.
+    Returns
+    ----------
+    new_vertices : ndarray
+        Shape vertices.
     """
     angle = np.deg2rad(angle)
     ox,oy = origin
@@ -79,19 +88,21 @@ def _thicken(x:np.ndarray, y:np.ndarray, theta:np.ndarray, width:float):
     """
     Adds width to a curve.
 
-    Parameters:
-        x : ndarray
-            x data.
-        y : ndarray
-            y data.
-        theta : ndarray
-            Angle of the line tangent to the curve, in degrees.
-        width : float
-            Path width.
+    Parameters
+    ----------
+    x : ndarray
+        x data.
+    y : ndarray
+        y data.
+    theta : ndarray
+        Angle of the line tangent to the curve, in degrees.
+    width : float
+        Path width.
 
-    Returns:
-        vertices : ndarray
-            Shape vertices.
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
     """
     theta_rad = np.deg2rad(theta)
 
@@ -112,18 +123,21 @@ def linear_taper(w0:float, w1:float, length:float, num_pts=2):
     """
     Generates vertices for linear taper in clockwise order.
 
-    Parameters:
-        w0 : float
-            Width of one end of the taper.
-        w1 : float
-            Width of the other end of the taper.
-        length : float
-            Distance between both ends of the taper.
-        num_pts : int, optional
-            Number of vertices on one side of the shape.
+    Parameters
+    ----------
+    w0 : float
+        Width of one end of the taper.
+    w1 : float
+        Width of the other end of the taper.
+    length : float
+        Distance between both ends of the taper.
+    num_pts : int, optional
+        Number of vertices on one side of the shape.
 
-    Returns:
-        [N-by-2] ndarray : Shape vertices.
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
     """
     if num_pts < 2:
         raise ValueError(f'Input parameter <num_pts> must be at least 2, but was given a value of {num_pts}.')
@@ -146,18 +160,21 @@ def parabolic_taper(w0:float, w1:float, length:float, num_pts=100):
     """
     Generates vertices for parabolic taper in clockwise order.
 
-    Parameters:
-        w0 : float
-            Width of one end of the taper.
-        w1 : float
-            Width of the other end of the taper.
-        length : float
-            Distance between both ends of the taper.
-        num_pts : int
-            Number of points on one side of the shape.
+    Parameters
+    ----------
+    w0 : float
+        Width of one end of the taper.
+    w1 : float
+        Width of the other end of the taper.
+    length : float
+        Distance between both ends of the taper.
+    num_pts : int
+        Number of points on one side of the shape.
 
-    Returns:
-        [N-by-2] ndarray : Shape vertices.
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
     """
     if num_pts % 2 != 0:
         num_pts += 1
@@ -180,18 +197,21 @@ def gaussian_taper(w0:float, w1:float, length:float, num_pts=100):
     """
     Generates vertices for Gaussian taper in clockwise order.
 
-    Parameters:
-        w0 : float
-            Width of one end of the taper.
-        w1 : float
-            Width of the other end of the taper.
-        length : float
-            Distance between both ends of the taper.
-        num_pts : int
-            Number of vertices on one side of the shape.
+    Parameters
+    ----------
+    w0 : float
+        Width of one end of the taper.
+    w1 : float
+        Width of the other end of the taper.
+    length : float
+        Distance between both ends of the taper.
+    num_pts : int
+        Number of vertices on one side of the shape.
 
-    Returns:
-        [N-by-2] ndarray : Shape vertices.
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
     """
     if num_pts % 2 != 0:
         num_pts += 1
@@ -214,28 +234,34 @@ def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, length=None, 
     """
     Generates vertices for Euler taper in clockwise order.
 
-    Parameters:
-        w0 : float
-            Width of the narrow end of the taper. Must be less than w1.
-        w1 : float
-            Width of the wide end of the taper. Must be greater than w0.
-        theta_max : float
-            Maximum taper half-angle in degrees. This angle occurs at the turning point.
-        rad2dy : float
-            Ratio between minimum bend radius to vertical displacement.
-        length : int or float, optional
-            Distance between both ends of the taper.
-        alpha : float, optional
-            Normalized position along taper length where the minimum bend radius occurs. Must be a value between 0 and 1.
-        num_pts : int, optional
-            Number of vertices on one side of the shape.
+    Parameters
+    ----------
+    w0 : float
+        Width of the narrow end of the taper. Must be less than w1.
+    w1 : float
+        Width of the wide end of the taper. Must be greater than w0.
+    theta_max : float
+        Maximum taper half-angle in degrees. This angle occurs at the turning point.
+    rad2dy : float
+        Ratio between minimum bend radius to vertical displacement.
+    length : int or float, optional
+        Distance between both ends of the taper.
+    alpha : float, optional
+        Normalized position along taper length where the minimum bend radius occurs. Must be a value between 0 and 1.
+    num_pts : int, optional
+        Number of vertices on one side of the shape.
 
-    Returns:
-        [N-by-2] ndarray : Shape vertices.
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
 
-    Raises:
-        ValueError: <w0> is less than <w1>.
-        ValueError: <alpha> is less than 0 or greater than 1.
+    Raises
+    ----------
+    ValueError
+        <w0> is less than <w1>.
+    ValueError
+        <alpha> is less than 0 or greater than 1.
     """
     if w0 > w1:
         raise ValueError('Input parameter <w0> must be larger than <w1>.')
@@ -325,27 +351,34 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0.0, 
     """
     Generates a circular arc path.
     
-    Parameters:
-        width : float
-            Path width.
-        radius : float
-            Arc center radius.
-        angle_range : float
-            Arc angular range in degrees.
-        angle_start : float, optional
-            Arc start angle in degrees. Zero degrees points to the +x direction.
-        direction : str, optional
-            Either "clockwise" or "counterclockwise".
-        num_pts : int, optional
-            Number of vertices on one side of the shape.
+    Parameters
+    ----------
+    width : float
+        Path width.
+    radius : float
+        Arc center radius.
+    angle_range : float
+        Arc angular range in degrees.
+    angle_start : float, optional
+        Arc start angle in degrees. Zero degrees points to the +x direction.
+    direction : str, optional
+        Either "clockwise" or "counterclockwise".
+    num_pts : int, optional
+        Number of vertices on one side of the shape.
 
-    Returns:
-        [N-by-2] ndarray : Shape vertices.
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
 
-    Raises:
-        ValueError: <width> is larger than the diameter.
-        ValueError: <angle_range> is zero, negative, or greater than 360.
-        ValueError: <direction> is neither 'clockwise' or 'counterclockwise'.
+    Raises
+    ----------
+    ValueError
+        <width> is larger than the diameter.
+    ValueError
+        <angle_range> is zero, negative, or greater than 360.
+    ValueError
+        <direction> is neither 'clockwise' or 'counterclockwise'.
     """
     # Check parameters
     if radius <= width/2:
@@ -378,16 +411,19 @@ def circular_ring(width:float, radius:float, num_pts=100):
     """
     Generates a circular ring.
     
-    Parameters:
-        width : float
-            Path width.
-        radius : float
-            Path center radius.
-        num_pts : int, optional
-            Number of vertices on one side of the shape.
+    Parameters
+    ----------
+    width : float
+        Path width.
+    radius : float
+        Path center radius.
+    num_pts : int, optional
+        Number of vertices on one side of the shape.
 
-    Returns:
-        [N-by-2] ndarray : Shape vertices.
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
     """
     vertices = circular_arc(
         width=width, 
@@ -400,20 +436,23 @@ def circular_s_bend(width:float, radius:float, span:float, angle=None, reflect=F
     """
     Generates a circular S-bend.
 
-    Parameters:
-        width : float
-            Path width.
-        radius : float
-            Path center radius of curvature.
-        span : float
-            Longitudinal distance between input and output.
-        reflect : bool, optional
-            Whether to reflect over longitudinal axis.
-        num_pts : int, optional
-            Number of vertices on one side of the shape.
+    Parameters
+    ----------
+    width : float
+        Path width.
+    radius : float
+        Path center radius of curvature.
+    span : float
+        Longitudinal distance between input and output.
+    reflect : bool, optional
+        Whether to reflect over longitudinal axis.
+    num_pts : int, optional
+        Number of vertices on one side of the shape.
 
-    Returns:
-        [N-by-2] ndarray : Rotated vertices.
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
     """
     if 2*radius < span:
         raise ValueError('Input parameter <radius> must be greater than <span>/2.')
@@ -460,18 +499,21 @@ def circular_u_bend(width:float, span:float, direction='counterclockwise', num_p
     """
     Generates a circular 180 degree bend path.
 
-    Parameters:
-        width : float
-            Path width.
-        span : float
-            Distance between input and output.
-        direction : str
-            Either "clockwise" or "counterclockwise".
-        num_pts : int
-            Number of vertices on one side of the shape.
+    Parameters
+    ----------
+    width : float
+        Path width.
+    span : float
+        Distance between input and output.
+    direction : str
+        Either "clockwise" or "counterclockwise".
+    num_pts : int
+        Number of vertices on one side of the shape.
 
-    Returns:
-        [N-by-2] ndarray : Rotated vertices.
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
     """
     vertices = circular_arc(
         width=width,
@@ -484,18 +526,23 @@ def circular_u_bend(width:float, span:float, direction='counterclockwise', num_p
 
 def circular_l_bend(width:float, radius:float, direction='counterclockwise', num_pts=100):
     """
-    Parameters:
-        width : float
-            Path width.
-        span : float
-            Distance between input and output.
-        direction : str
-            Either "clockwise" or "counterclockwise".
-        num_pts : int
-            Number of vertices on one side of the shape.
+    Generates a circular 90 degree bend path.
 
-    Returns:
-        [N-by-2] ndarray : Rotated vertices.
+    Parameters
+    ----------
+    width : float
+        Path width.
+    span : float
+        Distance between input and output.
+    direction : str
+        Either "clockwise" or "counterclockwise".
+    num_pts : int
+        Number of vertices on one side of the shape.
+
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
     """
     vertices = circular_arc(
         width=width,
@@ -538,22 +585,25 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0.0,
     """
     Generates an Euler (aka clothoidal) arc path.
 
-    Parameters:
-        width : float
-            Path width.
-        min_radius : float
-            Minimum radius of curvature.
-        angle_range : float
-            Arc angular range in degrees.
-        angle_start : float, optional
-            Arc start angle in degrees. Zero degrees points to the +x direction.
-        direction : str, optional
-            Either "clockwise" or "counterclockwise".
-        num_pts : int, optional
-            Number of points on one side of the shape.
+    Parameters
+    ----------
+    width : float
+        Path width.
+    min_radius : float
+        Minimum radius of curvature.
+    angle_range : float
+        Arc angular range in degrees.
+    angle_start : float, optional
+        Arc start angle in degrees. Zero degrees points to the +x direction.
+    direction : str, optional
+        Either "clockwise" or "counterclockwise".
+    num_pts : int, optional
+        Number of points on one side of the shape.
 
-    Returns:
-        [N-by-2] ndarray : Shape vertices.
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
     """
     if min_radius <= width/2:
         raise ValueError('Input parameter <width> must be less than 2*<min_radius>.')
@@ -579,24 +629,27 @@ def euler_s_bend(width:float, rad2dy:float, theta_max:float, span:float, length=
     """
     Generates an Euler S-bend.
 
-    Parameters:
-        width : float
-            Path width.
-        rad2dy : float
-            Ratio between minimum bend radius to vertical displacement.
-        theta_max : float
-            Maximum angle made by bend in degrees. Occurs at the turning point.
-        span : float
-            Transverse distance between input and output.
-        length : int or float, optional
-            Longitudinal distance between input and output. 
-        reflect : bool, optional
-            Whether to reflect over longitudinal axis.
-        num_pts : int, optional
-            Number of points on one side of the shape.
+    Parameters
+    ----------
+    width : float
+        Path width.
+    rad2dy : float
+        Ratio between minimum bend radius to vertical displacement.
+    theta_max : float
+        Maximum angle made by bend in degrees. Occurs at the turning point.
+    span : float
+        Transverse distance between input and output.
+    length : int or float, optional
+        Longitudinal distance between input and output. 
+    reflect : bool, optional
+        Whether to reflect over longitudinal axis.
+    num_pts : int, optional
+        Number of points on one side of the shape.
 
-    Returns:
-        [N-by-2] ndarray : Shape vertices.
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
     """
     if num_pts % 2 != 0:
         num_pts += 1
@@ -645,18 +698,21 @@ def euler_u_bend(width:float, span:float, direction='counterclockwise', num_pts=
     """
     Generates an Euler 180 degree bend path.
 
-    Parameters:
-        width : float
-            Path width.
-        span : float
-            Distance between input and output.
-        direction : str
-            Either "clockwise" or "counterclockwise".
-        num_pts : float
-            Number of vertices on one side of the shape.
+    Parameters
+    ----------
+    width : float
+        Path width.
+    span : float
+        Distance between input and output.
+    direction : str
+        Either "clockwise" or "counterclockwise".
+    num_pts : float
+        Number of vertices on one side of the shape.
 
-    Returns:
-        [N-by-2] ndarray : Shape vertices.
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
     """
     if num_pts % 2 != 0:
         num_pts += 1
@@ -693,18 +749,21 @@ def euler_l_bend(width:float, min_radius:float, span=None, direction='counterclo
     """
     Generates an Euler 90 degree bend.
 
-    Parameters:
-        width : float
-            Path width.
-        min_radius : float
-            Minimum radius of curvature.
-        direction : str
-            Either "clockwise" or "counterclockwise".
-        num_pts : int
-            Number of vertices on one side of the shape.
+    Parameters
+    ----------
+    width : float
+        Path width.
+    min_radius : float
+        Minimum radius of curvature.
+    direction : str
+        Either "clockwise" or "counterclockwise".
+    num_pts : int
+        Number of vertices on one side of the shape.
 
-    Returns:
-        [N-by-2] ndarray : Rotated vertices.
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
     """
     if num_pts % 2 != 0:
         num_pts += 1
