@@ -489,7 +489,7 @@ class LumericalFDTD(LumericalBase):
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z)
         else:
-            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
+            raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
 
     def add_expansion_monitor(self, center_wl:float, wl_span:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', mode_selection='fundamental mode', modes=np.array([1]), num_pts=21, name='Expansion Monitor'):
         """
@@ -532,7 +532,7 @@ class LumericalFDTD(LumericalBase):
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z)
         else:
-            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
+            raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
 
         # Mode expansion
         self._mode_select(mode_selection=mode_selection, modes=modes)
@@ -598,7 +598,7 @@ class LumericalFDTD(LumericalBase):
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z)
         else:
-            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
+            raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
 
     def add_mode(self, center_wl:float, wl_span:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, axis='x-axis', direction='forward', mode_selection='fundamental mode', modes=np.array([1])):
         """
