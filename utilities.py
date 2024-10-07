@@ -15,13 +15,10 @@ class LumericalBase():
         Matches the given material to Lumerical's database and assigns it to the object.
         If a number, set the material's refractive index instead.
 
-        Parameters:
-            material : float or str
-                Name or refractive index of the material.
-        
-        Raises:
-            ValueError: <material> does not match any material in database.
-            TypeError: <material> is neither a float or string.
+        Parameters
+        ----------
+        material : float or str
+            Name or refractive index of the material.
         """
         match material:
             case str():
@@ -34,9 +31,9 @@ class LumericalBase():
             case _:
                 raise TypeError('Input parameter <material> must be either a string, integer, or float.')
             
-    def _draw_3D_box(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None):
+    def _set_x_coords(self, x=None, x_span=None, x_min=None, x_max=None):
         """
-        Helper function for drawing a 3D region.
+        Helper function for setting either the (x, x span) or (x min, x max).
         """
         if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
             self.lum.set('x', x)
@@ -46,7 +43,11 @@ class LumericalBase():
             self.lum.set('x max', x_max)
         else:
             raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
-
+        
+    def _set_y_coords(self, y=None, y_span=None, y_min=None, y_max=None):
+        """
+        Helper function for setting either the (y, y span) or (y min, y max).
+        """
         if all(isinstance(arg, (int,float)) for arg in (y, y_span)):
             self.lum.set('y', y)
             self.lum.set('y span', y_span)
@@ -55,7 +56,11 @@ class LumericalBase():
             self.lum.set('y max', y_max)
         else:
             raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
-
+    
+    def _set_z_coords(self, z=None, z_span=None, z_min=None, z_max=None):
+        """
+        Helper function for setting either the (z, z span) or (z min, z max).
+        """
         if all(isinstance(arg, (int,float)) for arg in (z, z_span)):
             self.lum.set('z', z)
             self.lum.set('z span', z_span)
@@ -64,98 +69,53 @@ class LumericalBase():
             self.lum.set('z max', z_max)
         else:
             raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
+            
+    def _draw_3D_box(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None):
+        """
+        Helper function for drawing a 3D region.
+        """
+        self._set_x_coords(x=x, x_span=x_span, x_min=x_min, x_max=x_max)
+        self._set_y_coords(y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+        self._set_z_coords(z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         
     def _draw_2D_box_x(self, x:float, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None):
         """
         Helper function for drawing a 2D box normal to the x-axis.
         """
-        self.lum.set('x', x)
-
-        if all(isinstance(arg, (int,float)) for arg in (y, y_span)):
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-        elif all(isinstance(arg, (int,float)) for arg in (y_min, y_max)):
-            self.lum.set('y min', y_min)
-            self.lum.set('y max', y_max)
-        else:
-            raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
-        
-        if all(isinstance(arg, (int,float)) for arg in (z, z_span)):
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        elif all(isinstance(arg, (int,float)) for arg in (z_min, z_max)):
-            self.lum.set('z min', z_min)
-            self.lum.set('z max', z_max)
-        else:
-            # raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
-            pass
+        self.lum.set('x', x)      
+        self._set_y_coords(y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+        self._set_z_coords(z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         
     def _draw_2D_box_y(self, y:float, x=None, x_span=None, x_min=None, x_max=None, z=None, z_span=None, z_min=None, z_max=None):
         """
         Helper function for drawing a 2D box normal to the y-axis.
-        """
+        """ 
+        self._set_x_coords(x=x, x_span=x_span, x_min=x_min, x_max=x_max)
         self.lum.set('y', y)
-
-        if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-        elif all(isinstance(arg, (int,float)) for arg in (x_min, x_max)):
-            self.lum.set('x min', x_min)
-            self.lum.set('x max', x_max)
-        else:
-            raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
-        
-        self.lum.set('y', y)
-        
-        if all(isinstance(arg, (int,float)) for arg in (z, z_span)):
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        elif all(isinstance(arg, (int,float)) for arg in (z_min, z_max)):
-            self.lum.set('z min', z_min)
-            self.lum.set('z max', z_max)
-        else:
-            # raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
-            pass
+        self._set_z_coords(z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         
     def _draw_2D_box_z(self, z:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None):
         """
         Helper function for drawing a 2D box normal to the z-axis.
-        """
-        self.lum.set('z', z)
-
-        if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-        elif all(isinstance(arg, (int,float)) for arg in (x_min, x_max)):
-            self.lum.set('x min', x_min)
-            self.lum.set('x max', x_max)
-        else:
-            raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
-        
-        if all(isinstance(arg, (int,float)) for arg in (y, y_span)):
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-        elif all(isinstance(arg, (int,float)) for arg in (y_min, y_max)):
-            self.lum.set('y min', y_min)
-            self.lum.set('y max', y_max)
-        else:
-            raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
-        
+        """     
+        self._set_x_coords(x=x, x_span=x_span, x_min=x_min, x_max=x_max)
+        self._set_y_coords(y=y, y_span=y_span, y_min=y_min, y_max=y_max)
         self.lum.set('z', z)
 
     def add_rect(self, material, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, mesh_order=2, name='Rectangle', alpha=0.5):
         """
         Adds a rectangle object in the simulation.
 
-        Parameters:
-            material : float or str
-                If float, sets material index; if string, sets material to library material.
-            mesh_order : int, optional
-                Priority number with which to draw the object. Lower means higher priority.
-            name : str, optional
-                Object name.
-            alpha : float, optional
-                Object render opacity.
+        Parameters
+        ----------
+        material : float or str
+            If float, sets material index; if string, sets material to library material.
+        mesh_order : int, optional
+            Priority number with which to draw the object. Lower means higher priority.
+        name : str, optional
+            Object name.
+        alpha : float, optional
+            Object render opacity.
         """
         self.lum.addrect()
         self.lum.set('name', name)
@@ -166,76 +126,83 @@ class LumericalBase():
             y=y, y_span=y_span, y_min=y_min, y_max=y_max, 
             z=z, z_span=z_span, z_min=z_min, z_max=z_max)
 
+        # Material
         self._match_material(material=material)
         self.lum.set('alpha', alpha)
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
-    def add_circle(self, x:float, y:float, z_min:float, z_max:float, radius:float, axis:str, theta:float, material, mesh_order=2, name='Circle', alpha=0.5):
+    def add_circle(self, x:float, y:float, radius:float, axis:str, theta:float, material, z=None, z_span=None, z_min=None, z_max=None, mesh_order=2, name='Circle', alpha=0.5):
         """
         Adds a cylinder object in the simulation.
 
-        Parameters:
-            radius : float
-                Radius in meters.
-            axis : str
-                Axis of rotation ("x", "y", or "z").
-            theta : float
-                Rotation angle in degrees.
-            material : float or str
-                If float, sets material index; if string, sets material to library material.
-            mesh_order : int, optional
-                Priority number with which to draw the object. Lower means higher priority.
-            name : str, optional
-                Object name.
-            alpha : float, optional
-                Object render opacity.
+        Parameters
+        ----------
+        radius : float
+            Radius in meters.
+        axis : str
+            Axis of rotation ("x", "y", or "z").
+        theta : float
+            Rotation angle in degrees.
+        material : float or str
+            If float, sets material index; if string, sets material to library material.
+        mesh_order : int, optional
+            Priority number with which to draw the object. Lower means higher priority.
+        name : str, optional
+            Object name.
+        alpha : float, optional
+            Object render opacity.
         """
         self.lum.addcircle()
         self.lum.set('name', name)
+
+        # Geometry
         self.lum.set('x', x)
         self.lum.set('y', y)
-        self.lum.set('z min', z_min)
-        self.lum.set('z max', z_max)
+        self._set_z_coords(z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         self.lum.set('radius', radius)
         self.lum.set('first axis', axis)
         self.lum.set('rotation 1', theta)
 
+        # Material
         self._match_material(material=material)
         self.lum.set('alpha', alpha)
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
-    def add_ring(self, x:float, y:float, z_min:float, z_max:float, r_out:float, r_in:float, material, mesh_order=2, name='Ring', alpha=0.5):
+    def add_ring(self, x:float, y:float, r_out:float, r_in:float, material, z=None, z_span=None, z_min=None, z_max=None, mesh_order=2, name='Ring', alpha=0.5):
         """
         Adds a ring object in the simulation.
 
-        Parameters:
-            r_out : float
-                Outer radius in meters.
-            r_in : float
-                Inner radius in meters.
-            material : float or str
-                If float, sets material index; if string, sets material to library material.
-            mesh_order : int, optional
-                Priority number with which to draw the object. Lower means higher priority.
-            name : str, optional
-                Object name.
-            alpha : float, optional
-                Object render opacity.
+        Parameters
+        ----------
+        r_out : float
+            Outer radius in meters.
+        r_in : float
+            Inner radius in meters.
+        material : float or str
+            If float, sets material index; if string, sets material to library material.
+        mesh_order : int, optional
+            Priority number with which to draw the object. Lower means higher priority.
+        name : str, optional
+            Object name.
+        alpha : float, optional
+            Object render opacity.
         """
         self.lum.addring()
         self.lum.set('name', name)
+
+        # Geometry
         self.lum.set('x', x)
         self.lum.set('y', y)
-        self.lum.set('z min', z_min)
-        self.lum.set('z max', z_max)
+        self._set_z_coords(z=z, z_span=z_span, z_min=z_min, z_max=z_max)
 
         if r_out <= r_in:
             raise ValueError('Input argument <r_out> must be greater than <r_in>.')
         self.lum.set('outer radius', r_out)
         self.lum.set('inner radius', r_in)
 
+        # Material
         self._match_material(material=material)
         self.lum.set('alpha', alpha)
         self.lum.set('override mesh order from material database', True)
@@ -245,33 +212,29 @@ class LumericalBase():
         """
         Adds a polygon object in the simulation.
 
-        Parameters:
-            vertices : [N-by-2] array
-                Vertices defining polygon shape.
-            material : float or str
-                If float, sets material index; if string, sets material to library material.
-            mesh_order : int, optional
-                Priority number with which to draw the object. Lower means higher priority.
-            name : str, optional
-                Object name.
-            alpha : float, optional
-                Object render opacity.
+        Parameters
+        ----------
+        vertices : [N-by-2] array
+            Vertices defining polygon shape.
+        material : float or str
+            If float, sets material index; if string, sets material to library material.
+        mesh_order : int, optional
+            Priority number with which to draw the object. Lower means higher priority.
+        name : str, optional
+            Object name.
+        alpha : float, optional
+            Object render opacity.
         """
         self.lum.addpoly()
-        self.lum.set('vertices', vertices)
         self.lum.set('name', name)
+
+        # Geometry
+        self.lum.set('vertices', vertices)
         self.lum.set('x', x)
         self.lum.set('y', y)
+        self._set_z_coords(z=z, z_span=z_span, z_min=z_min, z_max=z_max)
 
-        if all(isinstance(arg, (int,float)) for arg in (z, z_span)):
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        elif all(isinstance(arg, (int,float)) for arg in (z_min, z_max)):
-            self.lum.set('z min', z_min)
-            self.lum.set('z max', z_max)
-        else:
-            raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
-
+        # Material
         self._match_material(material=material)
         self.lum.set('alpha', alpha)
         self.lum.set('override mesh order from material database', True)
@@ -281,22 +244,23 @@ class LumericalBase():
         """
         Adds a mesh override to a specific area or structure in the simulation.
 
-        Parameters:
-            dx : float, optional
-                x discretization in meters.
-            dy : float, optional
-                y discretization in meters.
-            dz : float, optional
-                z discretization in meters.
-            structure : str, optional
-                Simulation object on which to apply mesh override.
-            name : str, optional
-                Mesh override name.
+        Parameters
+        ----------
+        dx : float, optional
+            x discretization in meters.
+        dy : float, optional
+            y discretization in meters.
+        dz : float, optional
+            z discretization in meters.
+        structure : str, optional
+            Simulation object on which to apply mesh override.
+        name : str, optional
+            Mesh override name.
         """
         self.lum.addmesh()
         self.lum.set('name', name)
 
-        # Geometry settings
+        # Geometry
         dimensions = (x, x_span, x_min, x_max, y, y_span, y_min, y_max, z, z_span, z_min, z_max)
         if not all(arg is None for arg in dimensions):
             self._draw_3D_box(
@@ -308,7 +272,7 @@ class LumericalBase():
         # This only takes effect if <structure> is exactly equal to the name of the object
         # that's being overridden, not the name of the mesh itself.
         if isinstance(structure, str):
-            self.lum.set('based on a structure', 1)
+            self.lum.set('based on a structure', True)
             self.lum.set('structure', structure)
 
         # Sets the mesh overrides if they are specified
@@ -326,11 +290,12 @@ class LumericalBase():
         """
         Adds an index monitor.
 
-        Parameters:
-            monitor_type : str, optional
-                Monitor orientation.
-            name : str, optional
-                Monitor name.
+        Parameters
+        ----------
+        monitor_type : str, optional
+            Monitor orientation.
+        name : str, optional
+            Monitor name.
         """
         self.lum.addindex()
 
@@ -363,17 +328,32 @@ class LumericalFDTD(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
+    def _mode_select(self, mode_selection='fundamental mode', modes=None):
+        """
+        Helper function for selecting modes.
+        """
+        settings = ('fundamental mode', 'fundamental TE mode', 'fundamental TM mode', 'user select')
+
+        if mode_selection not in settings:
+            raise ValueError(f'Input parameter <mode_selection> must be one of the following strings: "fundamental mode", "fundamental TE mode", "fundamental TM mode", or "user select". It was given"{mode_selection}".')
+        self.lum.set('mode selection', mode_selection)
+        if mode_selection == 'user select' and isinstance(modes, np.ndarray):
+            if any(not isinstance(mode_item, np.int32) for mode_item in modes):
+                raise ValueError('Input parameter <modes> must be a numpy ndarray containing only integers (numpy int32). At least one value is a non-integer.')
+            self.lum.set('selected mode number', modes)
+
     def add_fdtd_3D(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, background_material=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='PML', z_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
         """
         Adds a 3D FDTD simulation region.
 
-        Parameters:
-            background_material : str or float
-                If float, sets material index; if string, sets material to library material.
-            mesh_accuracy : int, optional
-                Mesh resolution.
-            simulation_time : float, optional
-                Maximum duration of a simulation in seconds.
+        Parameters
+        ----------
+        background_material : str or float
+            If float, sets material index; if string, sets material to library material.
+        mesh_accuracy : int, optional
+            Mesh resolution.
+        simulation_time : float, optional
+            Maximum duration of a simulation in seconds.
         """
         self.lum.addfdtd()
 
@@ -412,11 +392,12 @@ class LumericalFDTD(LumericalBase):
         """
         Adds a 2D FDTD simulation area.
 
-        Parameters:
-            mesh_accuracy : int, optional
-                Mesh resolution.
-            simulation_time : float, optional
-                Maximum duration of a simulation in seconds.
+        Parameters
+        ----------
+        mesh_accuracy : int, optional
+            Mesh resolution.
+        simulation_time : float, optional
+            Maximum duration of a simulation in seconds.
         """
         self.lum.addfdtd()
 
@@ -435,25 +416,10 @@ class LumericalFDTD(LumericalBase):
                 raise TypeError('Input parameter <background_material> must be either a string, integer, or float.')
 
         # Geometry
-        if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
-            self.lum.set('x', x)
-            self.lum.set('x span', x_span)
-        elif all(isinstance(arg, (int,float)) for arg in (x_min, x_max)):
-            self.lum.set('x min', x_min)
-            self.lum.set('x max', x_max)
-        else:
-            raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
-        
-        if all(isinstance(arg, (int,float)) for arg in (y, y_span)):
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-        elif all(isinstance(arg, (int,float)) for arg in (y_min, y_max)):
-            self.lum.set('y min', y_min)
-            self.lum.set('y max', y_max)
-        else:
-            raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
-        
-        self.lum.set('z', z)
+        self._draw_2D_box_z(
+            x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+            y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+            z=z)
 
         # Boundary Conditions
         self.lum.set('x min bc', x_min_bc)
@@ -468,15 +434,16 @@ class LumericalFDTD(LumericalBase):
         """
         Set global monitor settings.
 
-        Parameters:
-            center_wl : float
-                Center wavelength in meters.
-            wl_span : float
-                Wavelength span in meters.
-            use_wl_spacing : bool, optional
-                True for equal wavelength intervals. False for equal frequency intervals.
-            num_pts : int, optional
-                Number of wavelength points.
+        Parameters
+        ----------
+        center_wl : float
+            Center wavelength in meters.
+        wl_span : float
+            Wavelength span in meters.
+        use_wl_spacing : bool, optional
+            True for equal wavelength intervals. False for equal frequency intervals.
+        num_pts : int, optional
+            Number of wavelength points.
         """
         if use_wl_spacing:
             self.lum.setglobalmonitor('use wavelength spacing', True)
@@ -491,11 +458,12 @@ class LumericalFDTD(LumericalBase):
         """
         Adds a field and power monitor in the simulation.
 
-        Parameters:
-            monitor_type : str, optional
-                Monitor orientation.
-            name : str, optional
-                Monitor name.
+        Parameters
+        ----------
+        monitor_type : str, optional
+            Monitor orientation.
+        name : str, optional
+            Monitor name.
         """
         self.lum.addpower()
 
@@ -523,19 +491,22 @@ class LumericalFDTD(LumericalBase):
         else:
             raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
 
-    def add_expansion_monitor(self, center_wl:float, wl_span:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', mode_selection='fundamental mode', num_pts=21, name='Expansion Monitor'):
+    def add_expansion_monitor(self, center_wl:float, wl_span:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', mode_selection='fundamental mode', modes=np.array([1]), num_pts=21, name='Expansion Monitor'):
         """
         Adds a mode expansion monitor in the simulation.
 
-        Parameters:
-            monitor_type : str, optional
-                Monitor orientation.
-            mode_selection : str, optional
-                Either "fundamental mode" or "user select".
-            num_pts : int, optional
-                Number of wavelength points.
-            name : str, optional
-                Monitor name.
+        Parameters
+        ----------
+        monitor_type : str, optional
+            Monitor orientation.
+        mode_selection : str, optional
+            Either "fundamental mode" or "user select".
+        modes : ndarray, optional
+            Numpy array of mode numbers, all of which must be integers.
+        num_pts : int, optional
+            Number of wavelength points.
+        name : str, optional
+            Monitor name.
         """
         self.lum.addmodeexpansion()
 
@@ -564,9 +535,7 @@ class LumericalFDTD(LumericalBase):
             raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
 
         # Mode expansion
-        if mode_selection == 'user select':
-            self.lum.set('mode selection', mode_selection)
-            self.lum.set('selected mode numbers', 1)
+        self._mode_select(mode_selection=mode_selection, modes=modes)
         
         self.lum.set('override global monitor settings', True)
         self.lum.set('use wavelength spacing', True)
@@ -582,13 +551,14 @@ class LumericalFDTD(LumericalBase):
         """
         Associates a power monitor with a mode expansion monitor.
 
-        Parameters:
-            expansion_monitor : str
-                Name of the expansion monitor, must exist in the simulation.
-            power_monitor : str
-                Name of the DFT monitor, must exist in the simulation.
-            port : str, optional
-                Name of expansion port from which data is collected.
+        Parameters
+        ----------
+        expansion_monitor : str
+            Name of the expansion monitor, must exist in the simulation.
+        power_monitor : str
+            Name of the DFT monitor, must exist in the simulation.
+        port : str, optional
+            Name of expansion port from which data is collected.
         """
         self.lum.select(expansion_monitor)
         self.lum.setexpansion(port, power_monitor)
@@ -597,11 +567,12 @@ class LumericalFDTD(LumericalBase):
         """
         Adds a movie monitor.
 
-        Parameters:
-            monitor_type : str, optional
-                Monitor orientation.
-            name : str, optional
-                Monitor name.
+        Parameters
+        ----------
+        monitor_type : str, optional
+            Monitor orientation.
+        name : str, optional
+            Monitor name.
         """
         self.lum.addmovie()
 
@@ -629,26 +600,32 @@ class LumericalFDTD(LumericalBase):
         else:
             raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
 
-    def add_mode(self, center_wl:float, wl_span:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, axis='x-axis', direction='forward'):
+    def add_mode(self, center_wl:float, wl_span:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, axis='x-axis', direction='forward', mode_selection='fundamental mode', modes=np.array([1])):
         """
         Adds a mode source in the simulation. Depending on the injection axis, 
         the span along that axis will be disabled.
 
-        Parameters:
-            center_wl : float
-                Center wavelength in meters.
-            wl_span : float
-                Wavelength span in meters.
-            axis : str
-                Propagation axis. May be either "x-axis", "y-axis", or "z_axis".
-            direction : str, optional
-                Either "forward" or "backward".
+        Parameters
+        ----------
+        center_wl : float
+            Center wavelength in meters.
+        wl_span : float
+            Wavelength span in meters.
+        axis : str
+            Propagation axis. May be either "x-axis", "y-axis", or "z_axis".
+        direction : str, optional
+            Either "forward" or "backward".
+        mode_selection : str, optional
+            Either "fundamental mode" or "user select".
+        modes : ndarray, optional
+            Numpy array of mode numbers, all of which must be integers.
         """
         self.lum.addmode()
 
         # General
         self.lum.set('injection axis', axis)
         self.lum.set('direction', direction)
+        self._mode_select(mode_selection=mode_selection, modes=modes)
 
         # Geometry
         if axis == 'x-axis':
@@ -667,31 +644,32 @@ class LumericalFDTD(LumericalBase):
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z)
         else:
-            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
+            raise ValueError(f'Input parameter <axis> must be either "x-axis", "y-axis", or "z-axis". It was given "{axis}".')
 
         # Frequency/Wavelength
         self.lum.set('center wavelength', center_wl)
         self.lum.set('wavelength span', wl_span)
 
-    def add_gaussian(self, center_wl:float, wl_span:float, radius:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, angle=0.0, axis='x', direction='forward', polarization_angle=0.0, distance=0.0,):
+    def add_gaussian(self, center_wl:float, wl_span:float, radius:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, angle=0.0, axis='x', direction='forward', polarization_angle=0.0, distance=0.0):
         """
         Adds a Gaussian source. Uses waist radius.
 
-        Parameters:
-            center_wl : float
-                Center wavelength in meters.
-            wl_span : float
-                Wavelength span in meters.
-            radius : float
-                Waist radius in meters.
-            angle : float
-                Angular direction in degrees.
-            axis : str, optional
-                Propagation axis ("x", "y", or "z").
-            direction : str, optional
-                Either "forward" or "backward".
-            distance : float, optional
-                Distance from waist in meters. Positive distance corresponds to a diverging beam, and negative distance corresponds to a converging beam.
+        Parameters
+        ----------
+        center_wl : float
+            Center wavelength in meters.
+        wl_span : float
+            Wavelength span in meters.
+        radius : float
+            Waist radius in meters.
+        angle : float
+            Angular direction in degrees.
+        axis : str, optional
+            Propagation axis ("x", "y", or "z").
+        direction : str, optional
+            Either "forward" or "backward".
+        distance : float, optional
+            Distance from waist in meters. Positive distance corresponds to a diverging beam, and negative distance corresponds to a converging beam.
         """
         self.lum.addgaussian()
 
@@ -718,7 +696,7 @@ class LumericalFDTD(LumericalBase):
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z)
         else:
-            raise ValueError('Input parameter <axis> must be either "x", "y", or "z".')
+            raise ValueError(f'Input parameter <axis> must be either "x", "y", or "z". It was given "{axis}".')
         
         # Frequency/Wavelength
         self.lum.set('center wavelength', center_wl)
@@ -772,7 +750,7 @@ class LumericalMODE(LumericalBase):
             self.lum.set('y min bc', y_min_bc)
             self.lum.set('y max bc', y_max_bc)
         else:
-            raise ValueError('Input parameter <solver_type> must be either "2D X normal", "2D Y normal", or "2D Z normal".')
+            raise ValueError(f'Input parameter <solver_type> must be either "2D X normal", "2D Y normal", or "2D Z normal". It was given "{solver_type}".')
         
         self.lum.setanalysis('wavelength', wl)
         self.lum.setanalysis('number of trial modes', num_modes)
@@ -809,24 +787,21 @@ class LumericalMODE(LumericalBase):
         self.lum.set('z min bc', z_min_bc)
         self.lum.set('z max bc', z_max_bc)
 
-
     def add_eme_3D(self, x_min:float, wl:float, groups:np.ndarray, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, num_modes=10, temperature=300, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
         """
         Adds an Eigenmode Expansion (EME) solver region in the simulation.
 
-        Parameters:
-            wl : float
-                Simulation wavelength in meters.
-            groups : [N-by-3] ndarray
-                Array containing information about each EME group. Each row represents a group.
-                The first column represents group spans in the x direction.
-                The second column represents the number of cells.
-                The third column represents the subcell method. 0 for none and 1 for CVCS.
-            temperature : float, optional
-                Simulation temperature in Kelvin.
-        
-        Raises:
-            ValueError: <groups> has the wrong dimensions.
+        Parameters
+        ----------
+        wl : float
+            Simulation wavelength in meters.
+        groups : [N-by-3] ndarray
+            Array containing information about each EME group. Each row represents a group.
+            The first column represents group spans in the x direction.
+            The second column represents the number of cells.
+            The third column represents the subcell method. 0 for none and 1 for CVCS.
+        temperature : float, optional
+            Simulation temperature in Kelvin.
         """
         self.lum.addeme()
         self.lum.set('simulation temperature', temperature)
@@ -857,24 +832,8 @@ class LumericalMODE(LumericalBase):
 
         # EME region
         self.lum.set('x min', x_min)
-
-        if all(isinstance(arg, (int,float)) for arg in (y, y_span)):
-            self.lum.set('y', y)
-            self.lum.set('y span', y_span)
-        elif all(isinstance(arg, (int,float)) for arg in (y_min, y_max)):
-            self.lum.set('y min', y_min)
-            self.lum.set('y max', y_max)
-        else:
-            raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
-        
-        if all(isinstance(arg, (int,float)) for arg in (z, z_span)):
-            self.lum.set('z', z)
-            self.lum.set('z span', z_span)
-        elif all(isinstance(arg, (int,float)) for arg in (z_min, z_max)):
-            self.lum.set('z min', z_min)
-            self.lum.set('z max', z_max)
-        else:
-            raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
+        self._set_y_coords(y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+        self._set_z_coords(z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         
         self.lum.set('display cells', True)
 
@@ -888,13 +847,14 @@ class LumericalMODE(LumericalBase):
         """
         Creates a gaussian beam profile.
 
-        Parameters:
-            radius : float
-                Waist radius in meters.
-            direction : str, optional
-                Beam direction. Either '2D X normal', '2D Y normal', or '2D Z normal'.
-            distance : float, optional
-                Distance from waist in meters.
+        Parameters
+        ----------
+        radius : float
+            Waist radius in meters.
+        direction : str, optional
+            Beam direction. Either '2D X normal', '2D Y normal', or '2D Z normal'.
+        distance : float, optional
+            Distance from waist in meters.
         """
         self.lum.setanalysis('use fully vectorial thin lens beam profile', False)
         
@@ -909,15 +869,16 @@ class LumericalMODE(LumericalBase):
         """
         Adds a mode source in the simulation. Works for varFDTD.
 
-        Parameters:
-            center_wl : float
-                Center wavelength in meters.
-            wl_span : float
-                Wavelength span in meters.
-            axis : str
-                Propagation axis. May be either "x-axis", "y-axis", or "z_axis".
-            direction : str, optional
-                Either "forward" or "backward".
+        Parameters
+        ----------
+        center_wl : float
+            Center wavelength in meters.
+        wl_span : float
+            Wavelength span in meters.
+        axis : str
+            Propagation axis. May be either "x-axis", "y-axis", or "z_axis".
+        direction : str, optional
+            Either "forward" or "backward".
         """
         self.lum.addmodesource()
 
@@ -979,11 +940,12 @@ class LumericalMODE(LumericalBase):
         """
         Adds a field and power monitor in the simulation.
 
-        Parameters:
-            monitor_type : str, optional
-                Monitor orientation.
-            name : str, optional
-                Monitor name.
+        Parameters
+        ----------
+        monitor_type : str, optional
+            Monitor orientation.
+        name : str, optional
+            Monitor name.
         """
         self.lum.addpower()
 
@@ -1075,10 +1037,11 @@ class LumericalCHARGE(LumericalBase):
         """
         Adds a CHARGE solver. Required for CHARGE monitors to be added.
 
-        Parameters:
-            solver_mode : str, optional
-            temperature_dependence : str, optional
-            temperature : float, optional
+        Parameters
+        ----------
+        solver_mode : str, optional
+        temperature_dependence : str, optional
+        temperature : float, optional
         """
         self.lum.addchargesolver()
 
