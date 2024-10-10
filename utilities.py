@@ -319,7 +319,7 @@ class LumericalBase():
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z)
         else:
-            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
+            raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
 
 class LumericalFDTD(LumericalBase):
     """
@@ -335,7 +335,7 @@ class LumericalFDTD(LumericalBase):
         settings = ('fundamental mode', 'fundamental TE mode', 'fundamental TM mode', 'user select')
 
         if mode_selection not in settings:
-            raise ValueError(f'Input parameter <mode_selection> must be one of the following strings: "fundamental mode", "fundamental TE mode", "fundamental TM mode", or "user select". It was given"{mode_selection}".')
+            raise ValueError(f'Input parameter <mode_selection> must be one of the following strings: "fundamental mode", "fundamental TE mode", "fundamental TM mode", or "user select". It was given "{mode_selection}".')
         self.lum.set('mode selection', mode_selection)
         if mode_selection == 'user select' and isinstance(modes, np.ndarray):
             if any(not isinstance(mode_item, np.int32) for mode_item in modes):
@@ -787,7 +787,7 @@ class LumericalMODE(LumericalBase):
         self.lum.set('z min bc', z_min_bc)
         self.lum.set('z max bc', z_max_bc)
 
-    def add_eme_3D(self, x_min:float, wl:float, groups:np.ndarray, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, num_modes=10, temperature=300, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
+    def add_eme_3D(self, x_min:float, wl:float, group_spans:np.ndarray, num_cells:np.ndarray, subcell_methods:np.ndarray, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, num_modes=10, temperature=300, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
         """
         Adds an Eigenmode Expansion (EME) solver region in the simulation.
 
@@ -795,11 +795,12 @@ class LumericalMODE(LumericalBase):
         ----------
         wl : float
             Simulation wavelength in meters.
-        groups : [N-by-3] ndarray
-            Array containing information about each EME group. Each row represents a group.
-            The first column represents group spans in the x direction.
-            The second column represents the number of cells.
-            The third column represents the subcell method. 0 for none and 1 for CVCS.
+        group_spans : ndarray
+            Array of group spans along the x-direction.
+        num_cells : ndarray
+            Array representing the number of cells in each group.
+        subcell_methods : ndarray
+            Array representing whether each group uses CVCS method.
         temperature : float, optional
             Simulation temperature in Kelvin.
         """
@@ -809,26 +810,11 @@ class LumericalMODE(LumericalBase):
         self.lum.set('wavelength', wl)
 
         # Cell group definition
-        groups = np.array(groups)
-        if groups.shape[0] < 1:
-            raise ValueError('Input parameter <groups> must have at least 1 row.')
-        self.lum.set('number of cell groups', groups.shape[0])
+        self.lum.set('number of cell groups', len(group_spans))
         self.lum.set('number of modes for all cell groups', num_modes)
-        
-        if groups.shape[1] != 3:
-            raise ValueError('Input parameter <groups> must have 3 columns.')
-        self.lum.set('group spans', groups[:,0])
-        self.lum.set('cells', groups[:,1])
-        self.lum.set('subcell method', groups[:,2])
-        # n_groups = len(groups[0])
-        # if len(groups[1]) != n_groups:
-        #     raise ValueError('.')
-        # if len(groups[2]) != n_groups:
-        #     raise ValueError('.')
-        
-        # self.lum.set('group spans', groups[0].T)
-        # self.lum.set('cells', groups[1].T)
-        # self.lum.set('subcell method', groups[2].T)
+        self.lum.set('group spans', group_spans)
+        self.lum.set('cells', num_cells)
+        self.lum.set('subcell method', subcell_methods)
 
         # EME region
         self.lum.set('x min', x_min)
@@ -898,7 +884,7 @@ class LumericalMODE(LumericalBase):
                 y=y,
                 z=None, z_span=None, z_min=None, z_max=None)
         else:
-            raise ValueError('Input parameter <axis> must be either "x-axis" or "y-axis".')
+            raise ValueError(f'Input parameter <axis> must be either "x-axis" or "y-axis". It was given "{axis}".')
 
         # Frequency/Wavelength
         self.lum.set('set wavelength', True)
@@ -934,7 +920,7 @@ class LumericalMODE(LumericalBase):
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z)
         else:
-            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
+            raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
         
     def add_power_monitor(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', name='Power Monitor'):
         """
@@ -971,7 +957,7 @@ class LumericalMODE(LumericalBase):
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z)
         else:
-            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
+            raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
         
 
 class LumericalHEAT(LumericalBase):
@@ -1031,7 +1017,7 @@ class LumericalCHARGE(LumericalBase):
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z)
         else:
-            raise ValueError('Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal".')
+            raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{dimension}".')
         
     def add_charge_solver(self, solver_mode='steady state', temperature_dependence='isothermal', temperature=300):
         """
@@ -1077,7 +1063,7 @@ class LumericalCHARGE(LumericalBase):
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
                 z=z)
         else:
-            raise ValueError('Input parameter <monitor_type> must be either "2D x-normal", "2D y-normal", or "2D z-normal".')
+            raise ValueError(f'Input parameter <monitor_type> must be either "2D x-normal", "2D y-normal", or "2D z-normal". It was given "{monitor_type}".')
         
     def get_capacitance(self, monitor_name:str):
         """
