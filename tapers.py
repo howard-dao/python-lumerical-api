@@ -3,7 +3,7 @@ Python odule for generating tapers.
 """
 
 import numpy as np
-from geometry import _euler_curve
+from geometry import _mirror, _euler_curve
 
 def linear_taper(w0:float, w1:float, length:float, num_pts=2):
     """
@@ -34,11 +34,7 @@ def linear_taper(w0:float, w1:float, length:float, num_pts=2):
     x = np.linspace(0, length, num_pts)
     y = slope*x + w0/2
 
-    # Concatenate top and bottom vertices
-    verts_top = np.vstack((x,y)).T
-    verts_bot = np.vstack((x,-y)).T
-    verts_bot = verts_bot[::-1]
-    vertices = np.vstack((verts_top, verts_bot))
+    vertices = _mirror(x=x, y=y, axis='y')
 
     return vertices
 
@@ -108,11 +104,7 @@ def gaussian_taper(w0:float, w1:float, length:float, num_pts=100):
     x = np.linspace(0, length, num_pts)
     y = w0 * np.sqrt(1 + (x/zr)**2) / 2
 
-    # Concatenate top and bottom vertices
-    verts_top = np.vstack((x,y)).T
-    verts_bot = np.vstack((x,-y)).T
-    verts_bot = verts_bot[::-1]
-    vertices = np.vstack((verts_top, verts_bot))
+    vertices = _mirror(x=x, y=y, axis='y')
     
     return vertices
 

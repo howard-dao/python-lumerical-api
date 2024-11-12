@@ -84,6 +84,21 @@ def _rotate(vertices:np.ndarray, angle:float, origin=[0,0]):
 
     return new_vertices
 
+def _mirror(x:np.ndarray, y:np.ndarray, axis:str):
+    v1 = np.vstack((x,y)).T
+
+    if axis == 'x':
+        v2 = np.vstack((-x,y)).T
+        v2 = v2[::-1]
+    elif axis == 'y':
+        v2 = np.vstack((x,-y)).T
+        v2 = v2[::-1]
+    else:
+        raise ValueError(f'Input parameter <axis> is neither "x" or "y". It was given {axis}.')
+    vertices = np.vstack((v1,v2))
+
+    return vertices
+
 def _thicken(x:np.ndarray, y:np.ndarray, theta:np.ndarray, width:float):
     """
     Adds width to a curve.
@@ -130,7 +145,9 @@ def _stitch(*args):
     if len(args) == 1:
         raise ValueError('Need at least 2 sets of vertices. Given only 1.')
     if any(not isinstance(arg, np.ndarray) for arg in args):
-        raise TypeError('At least 1 of the parameters is not an array of points.')
+        raise TypeError('At least 1 of the arguments is not an array of points.')
+    if any(not arg.shape[1] != 2 for arg in args):
+        raise ValueError('At least 1 of the arguments is not a set of (x,y) data.')
 
     x = np.array([])
     y = np.array([])

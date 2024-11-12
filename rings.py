@@ -1,3 +1,7 @@
+"""
+Python module for generating rings.
+"""
+
 import numpy as np
 from geometry import _translate, _rotate, _stitch
 from bends import circular_arc, circular_u_bend, euler_u_bend
