@@ -146,7 +146,7 @@ def _stitch(*args):
         raise ValueError('Need at least 2 sets of vertices. Given only 1.')
     if any(not isinstance(arg, np.ndarray) for arg in args):
         raise TypeError('At least 1 of the arguments is not an array of points.')
-    if any(not arg.shape[1] != 2 for arg in args):
+    if any(arg.shape[1] != 2 for arg in args):
         raise ValueError('At least 1 of the arguments is not a set of (x,y) data.')
 
     x = np.array([])
