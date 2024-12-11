@@ -5,7 +5,7 @@ Python odule for generating tapers.
 import numpy as np
 from geometry import _mirror, _euler_curve
 
-def linear_taper(w0:float, w1:float, length:float, num_pts=2):
+def linear_taper(w0:float, w1:float, length:float, num_pts=2) -> np.ndarray[float]:
     """
     Generates vertices for linear taper in clockwise order.
 
@@ -38,7 +38,7 @@ def linear_taper(w0:float, w1:float, length:float, num_pts=2):
 
     return vertices
 
-def parabolic_taper(w0:float, w1:float, length:float, num_pts=100):
+def parabolic_taper(w0:float, w1:float, length:float, num_pts=100) -> np.ndarray[float]:
     """
     Generates vertices for parabolic taper in clockwise order.
 
@@ -75,7 +75,7 @@ def parabolic_taper(w0:float, w1:float, length:float, num_pts=100):
     
     return vertices
 
-def gaussian_taper(w0:float, w1:float, length:float, num_pts=100):
+def gaussian_taper(w0:float, w1:float, length:float, num_pts=100) -> np.ndarray[float]:
     """
     Generates vertices for Gaussian taper in clockwise order.
 
@@ -108,7 +108,7 @@ def gaussian_taper(w0:float, w1:float, length:float, num_pts=100):
     
     return vertices
 
-def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, length=None, alpha=0.5, num_pts=100):
+def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, length=None, alpha=0.5, num_pts=100) -> np.ndarray[float]:
     """
     Generates vertices for Euler taper in clockwise order.
 

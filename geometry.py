@@ -7,7 +7,7 @@ import numpy as np
 from scipy.integrate import odeint
 import copy
 
-def _translate(vertices:np.ndarray, dx=0, dy=0):
+def _translate(vertices:np.ndarray, dx=0, dy=0) -> np.ndarray[float]:
     """
     Translates vertices along either x and y directions.
 
@@ -31,7 +31,7 @@ def _translate(vertices:np.ndarray, dx=0, dy=0):
 
     return new_vertices
 
-def _reflect(vertices:np.ndarray, angle:float):
+def _reflect(vertices:np.ndarray, angle:float) -> np.ndarray[float]:
     """
     Reflects vertices with respect to a given angle.
 
@@ -54,7 +54,7 @@ def _reflect(vertices:np.ndarray, angle:float):
 
     return new_vertices
 
-def _rotate(vertices:np.ndarray, angle:float, origin=[0,0]):
+def _rotate(vertices:np.ndarray, angle:float, origin=[0,0]) -> np.ndarray[float]:
     """
     Rotates a shape counterclockwise about an origin point.
 
@@ -84,7 +84,29 @@ def _rotate(vertices:np.ndarray, angle:float, origin=[0,0]):
 
     return new_vertices
 
-def _mirror(x:np.ndarray, y:np.ndarray, axis:str):
+def _mirror(x:np.ndarray, y:np.ndarray, axis:str) -> np.ndarray[float]:
+    """
+    Duplicates a set of vertices, reflects it in a given direction, then concatenates it with the first set.
+
+    Parameters
+    ----------
+    x : ndarray
+        x data.
+    y : ndarray
+        y data.
+    axis : str
+        Direction in which to mirror vertices.
+
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
+    
+    Raises
+    ----------
+    ValueError
+        `axis` is neither "x" nor "y".
+    """
     v1 = np.vstack((x,y)).T
 
     if axis == 'x':
@@ -99,7 +121,7 @@ def _mirror(x:np.ndarray, y:np.ndarray, axis:str):
 
     return vertices
 
-def _thicken(x:np.ndarray, y:np.ndarray, theta:np.ndarray, width:float):
+def _thicken(x:np.ndarray, y:np.ndarray, theta:np.ndarray, width:float) -> np.ndarray[float]:
     """
     Adds width to a curve.
 
@@ -119,13 +141,13 @@ def _thicken(x:np.ndarray, y:np.ndarray, theta:np.ndarray, width:float):
     vertices : ndarray
         Shape vertices.
     """
-    theta_rad = np.deg2rad(theta)
+    theta = np.deg2rad(theta)
 
-    x1 = x + (width/2)*np.cos(theta_rad + np.pi/2)
-    y1 = y + (width/2)*np.sin(theta_rad + np.pi/2)
+    x1 = x + (width/2)*np.cos(theta + np.pi/2)
+    y1 = y + (width/2)*np.sin(theta + np.pi/2)
 
-    x2 = x + (width/2)*np.cos(theta_rad - np.pi/2)
-    y2 = y + (width/2)*np.sin(theta_rad - np.pi/2)
+    x2 = x + (width/2)*np.cos(theta - np.pi/2)
+    y2 = y + (width/2)*np.sin(theta - np.pi/2)
 
     x = np.hstack((x1, x2[::-1]))
     y = np.hstack((y1, y2[::-1]))
@@ -133,7 +155,7 @@ def _thicken(x:np.ndarray, y:np.ndarray, theta:np.ndarray, width:float):
 
     return vertices
 
-def _stitch(*args):
+def _stitch(*args) -> np.ndarray[float]:
     """
     Stitches two or more shapes together.
 
@@ -141,13 +163,27 @@ def _stitch(*args):
     ----------
     args
         Vertices for all shapes to be stitched together.
+
+    Returns
+    ----------
+    vertices : ndarray
+        Shape vertices.
+
+    Raises
+    ----------
+    TypeError
+        At least one of the arguments is not an ndarray.
+    ValueError
+        At least one of the arguments is not an N-by-2 ndarray.
+    ValueError
+        Only one shape was given.
     """
-    if len(args) == 1:
-        raise ValueError('Need at least 2 sets of vertices. Given only 1.')
     if any(not isinstance(arg, np.ndarray) for arg in args):
         raise TypeError('At least 1 of the arguments is not an array of points.')
     if any(arg.shape[1] != 2 for arg in args):
         raise ValueError('At least 1 of the arguments is not a set of (x,y) data.')
+    if len(args) == 1:
+        raise ValueError('Need at least 2 sets of vertices. Given only 1.')
 
     x = np.array([])
     y = np.array([])
@@ -249,6 +285,15 @@ def _euler_curve(min_radius:float, angle_range:float, angle_start=0.0, num_pts=1
         Initial angle in degrees. Zero degrees points to the +x direction.
     num_pts : int, optional
         Number of vertices.
+
+    Returns
+    ----------
+    x : ndarray
+        x data.
+    y : ndarray
+        y data.
+    theta : ndarray
+        Angle of the line tangent to the curve, in degrees.
     """
     x0, y0, theta0 = 0, 0, np.deg2rad(angle_start)
     thetas = np.deg2rad(angle_range)

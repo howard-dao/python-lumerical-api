@@ -267,6 +267,8 @@ def euler_s_bend(width:float, rad2dy:float, theta_max:float, span:float, length=
     vertices : ndarray
         Shape vertices.
     """
+    if theta_max <= 0 or theta_max > 90:
+        raise ValueError(f'Input parameter <theta_max> must be between 0 and 90 degrees. It was given {theta_max} degrees.')
     if num_pts % 2 != 0:
         num_pts += 1
 
@@ -389,7 +391,7 @@ def euler_l_bend(width:float, min_radius:float, span=None, direction='counterclo
     Raises
     ----------
     ValueError
-        `direction` is neither 'clockwise' or 'counterclockwise'.
+        `direction` is neither "clockwise" or "counterclockwise".
     """
     if direction != 'clockwise' and direction != 'counterclockwise':
         raise ValueError('Input parameter <direction> must be either "clockwise" or "counterclockwise".')

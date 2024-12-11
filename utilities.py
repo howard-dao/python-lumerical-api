@@ -838,7 +838,7 @@ class LumericalMODE(LumericalBase):
         radius : float
             Waist radius in meters.
         direction : str, optional
-            Beam direction. Either '2D X normal', '2D Y normal', or '2D Z normal'.
+            Beam direction. Either "2D X normal", "2D Y normal", or "2D Z normal".
         distance : float, optional
             Distance from waist in meters.
         """

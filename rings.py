@@ -6,7 +6,7 @@ import numpy as np
 from geometry import _translate, _rotate, _stitch
 from bends import circular_arc, circular_u_bend, euler_u_bend
 
-def circular_ring(width:float, radius:float, num_pts=100):
+def circular_ring(width:float, radius:float, num_pts=100) -> np.ndarray[float]:
     """
     Generates a circular ring.
     
@@ -31,7 +31,7 @@ def circular_ring(width:float, radius:float, num_pts=100):
         num_pts=num_pts)
     return vertices
 
-def circular_racetrack(width:float, radius:float, length:float, num_pts=100):
+def circular_racetrack(width:float, radius:float, length:float, num_pts=100) -> np.ndarray[float]:
     """
     Generates a circular racetrack ring.
 
@@ -81,7 +81,7 @@ def circular_racetrack(width:float, radius:float, length:float, num_pts=100):
 
     return vertices
 
-def euler_racetrack(width:float, span:float, length:float, num_pts=100):
+def euler_racetrack(width:float, span:float, length:float, num_pts=100) -> np.ndarray[float]:
     """
     Generates an Euler racetrack ring.
 
