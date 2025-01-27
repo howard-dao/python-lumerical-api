@@ -14,7 +14,7 @@ def generate_directional_coupler():
         x_max=-coupling_length/2-bend_length,
         y_min=gap/2+span,
         y_max=gap/2+span+width,
-        z=0,
+        z=0.0,
         z_span=t_Si,
         material=silicon)
     fdtd.add_rect(
@@ -23,7 +23,7 @@ def generate_directional_coupler():
         x_max=-coupling_length/2-bend_length,
         y_min=-gap/2-span-width,
         y_max=-gap/2-span,
-        z=0,
+        z=0.0,
         z_span=t_Si,
         material=silicon)
     
@@ -31,7 +31,7 @@ def generate_directional_coupler():
         name='Input-Through',
         x=-coupling_length/2-bend_length,
         y=gap/2+span+width/2,
-        z=0,
+        z=0.0,
         z_span=t_Si,
         vertices=v1,
         material=silicon,
@@ -40,7 +40,7 @@ def generate_directional_coupler():
         name='Add-Cross',
         x=-coupling_length/2-bend_length,
         y=gap/2+span-width/2,
-        z=0,
+        z=0.0,
         z_span=t_Si,
         vertices=v2,
         material=silicon,
@@ -52,7 +52,7 @@ def generate_directional_coupler():
         x_max=dc_length/2+4e-6, 
         y_min=gap/2+span, 
         y_max=gap/2+span+width, 
-        z=0,
+        z=0.0,
         z_span=t_Si, 
         material=silicon)
     fdtd.add_rect(
@@ -61,7 +61,7 @@ def generate_directional_coupler():
         x_max=dc_length/2+4e-6,
         y_min=-gap/2-span-width,
         y_max=-gap/2-span,
-        z=0,
+        z=0.0,
         z_span=t_Si,
         material=silicon)
     
@@ -71,11 +71,11 @@ def place_simulation():
     fdtd_offset = 0.2e-6
 
     fdtd.add_fdtd_3D(
-        x=0,
+        x=0.0,
         x_span=dc_length+2*fdtd_offset,
-        y=0,
+        y=0.0,
         y_span=gap+width+2*span+2*fdtd_offset+z_span_fdtd,
-        z=0,
+        z=0.0,
         z_span=z_span_fdtd,
         mesh_accuracy=mesh_accuracy,
         background_material=oxide,
@@ -94,14 +94,15 @@ def place_monitors():
         x=x_monitor,
         y=y_monitor,
         y_span=monitor_span,
-        z=0, z_span=monitor_span)
+        z=0.0,
+        z_span=monitor_span)
     fdtd.add_power_monitor(
         name='Cross Power Monitor',
         monitor_type='2D X-normal',
         x=x_monitor,
         y=-y_monitor,
         y_span=monitor_span,
-        z=0,
+        z=0.0,
         z_span=monitor_span)
     
     fdtd.add_expansion_monitor(
@@ -110,7 +111,7 @@ def place_monitors():
         x=x_monitor,
         y=y_monitor,
         y_span=monitor_span,
-        z=0,
+        z=0.0,
         z_span=monitor_span,
         center_wl=lam0,
         wl_span=wl_span)
@@ -120,7 +121,7 @@ def place_monitors():
         x=x_monitor,
         y=-y_monitor,
         y_span=monitor_span,
-        z=0,
+        z=0.0,
         z_span=monitor_span,
         center_wl=lam0,
         wl_span=wl_span)
@@ -147,7 +148,7 @@ def place_source():
         x=x_source,
         y=y_source,
         y_span=source_span,
-        z=0,
+        z=0.0,
         z_span=source_span,
         axis='x-axis',
         direction='forward')

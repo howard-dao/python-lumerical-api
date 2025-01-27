@@ -54,7 +54,7 @@ def _reflect(vertices:np.ndarray, angle:float) -> np.ndarray[float]:
 
     return new_vertices
 
-def _rotate(vertices:np.ndarray, angle:float, origin=[0,0]) -> np.ndarray[float]:
+def _rotate(vertices:np.ndarray, angle:float, origin=(0,0)) -> np.ndarray[float]:
     """
     Rotates a shape counterclockwise about an origin point.
 

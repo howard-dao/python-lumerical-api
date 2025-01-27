@@ -65,7 +65,7 @@ def circular_arc(width:float, radius:float, angle_range:float, angle_start=0.0, 
 
     return vertices
 
-def circular_s_bend(width:float, radius:float, span:float, angle=None, reflect=False, num_pts=100):
+def circular_s_bend(width:float, radius:float, span=None, angle_range=None, reflect=False, num_pts=100):
     """
     Generates a circular S-bend.
 
@@ -77,6 +77,8 @@ def circular_s_bend(width:float, radius:float, span:float, angle=None, reflect=F
         Path center radius of curvature.
     span : float
         Longitudinal distance between input and output.
+    angle_range : float, optional
+        Angular range of bend until turning point.
     reflect : bool, optional
         Whether to reflect over longitudinal axis.
     num_pts : int, optional
@@ -92,24 +94,32 @@ def circular_s_bend(width:float, radius:float, span:float, angle=None, reflect=F
     ValueError
         `span` is larger than `2*radius`.
     """
-    if span > 2*radius:
-        raise ValueError('Input parameter <span> must be less than 2*<radius>')
     if num_pts % 2 != 0:
         num_pts += 1
 
-    theta0 = np.rad2deg(np.arccos(np.sqrt((radius*span - span**2/4)/radius**2)))
-    angle_range = 90 - theta0
+    if span != None:
+        if span > 2*radius:
+            raise ValueError('Input parameter <span> must be less than 2*<radius>.')
+        theta0 = np.rad2deg(np.arccos(np.sqrt((radius*span - span**2/4)/radius**2)))
+        delta_theta = 90 - theta0
+    elif angle_range != None:
+        if angle_range <= 0 or angle_range > 90:
+            raise ValueError('Input parameter <angle_range> must be between 0 and 180 degrees.')
+        span = 2 * radius * (1 - np.sin(np.deg2rad(angle_range)))
+        delta_theta = angle_range
+    else:
+        raise ValueError('Input parameters <span> and <angle_range> are not given.')
 
     x1, y1, theta1 = _circular_curve(
         radius=radius,
-        angle_range=angle_range,
+        angle_range=delta_theta,
         angle_start=0,
         direction='counterclockwise',
         num_pts=int(num_pts/2))
     x2, y2, _ = _circular_curve(
         radius=radius,
-        angle_range=angle_range,
-        angle_start=angle_range,
+        angle_range=delta_theta,
+        angle_start=delta_theta,
         direction='clockwise',
         num_pts=int(num_pts/2))
     theta2 = theta1[::-1]
@@ -218,7 +228,7 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0.0,
     Raises
     ----------
     ValueError
-
+        `width` is less than `2*min_radius`.
     ValueError
         `direction` is neither 'clockwise' or 'counterclockwise'.
     """

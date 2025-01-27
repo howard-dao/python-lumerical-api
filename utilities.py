@@ -10,7 +10,7 @@ class LumericalBase():
     def __init__(self, lum) -> None:
         self.lum = lum
     
-    def _match_material(self, material):
+    def _match_material(self, material:float|str):
         """
         Matches the given material to Lumerical's database and assigns it to the object.
         If a number, set the material's refractive index instead.
@@ -21,56 +21,56 @@ class LumericalBase():
             Name or refractive index of the material.
         """
         match material:
+            case int() | float():
+                self.lum.set('index', material)
             case str():
                 if self.lum.materialexists(material):
                     self.lum.set('material', material)
                 else:
                     raise ValueError('Input parameter <material> does not match any material in database.')
-            case int() | float():
-                self.lum.set('index', material)
             case _:
                 raise TypeError('Input parameter <material> must be either a string, integer, or float.')
             
-    def _set_x_coords(self, x=None, x_span=None, x_min=None, x_max=None):
+    def _set_x_coords(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None):
         """
         Helper function for setting either the (x, x span) or (x min, x max).
         """
-        if all(isinstance(arg, (int,float)) for arg in (x, x_span)):
+        if all(isinstance(arg, float) for arg in (x, x_span)):
             self.lum.set('x', x)
             self.lum.set('x span', x_span)
-        elif all(isinstance(arg, (int,float)) for arg in (x_min, x_max)):
+        elif all(isinstance(arg, float) for arg in (x_min, x_max)):
             self.lum.set('x min', x_min)
             self.lum.set('x max', x_max)
         else:
             raise ValueError('Input parameters <x>, <x_span>, <x_min>, <x_max> are not given.')
         
-    def _set_y_coords(self, y=None, y_span=None, y_min=None, y_max=None):
+    def _set_y_coords(self, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None):
         """
         Helper function for setting either the (y, y span) or (y min, y max).
         """
-        if all(isinstance(arg, (int,float)) for arg in (y, y_span)):
+        if all(isinstance(arg, float) for arg in (y, y_span)):
             self.lum.set('y', y)
             self.lum.set('y span', y_span)
-        elif all(isinstance(arg, (int,float)) for arg in (y_min, y_max)):
+        elif all(isinstance(arg, float) for arg in (y_min, y_max)):
             self.lum.set('y min', y_min)
             self.lum.set('y max', y_max)
         else:
             raise ValueError('Input parameters <y>, <y_span>, <y_min>, <y_max> are not given.')
     
-    def _set_z_coords(self, z=None, z_span=None, z_min=None, z_max=None):
+    def _set_z_coords(self, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None):
         """
         Helper function for setting either the (z, z span) or (z min, z max).
         """
-        if all(isinstance(arg, (int,float)) for arg in (z, z_span)):
+        if all(isinstance(arg, float) for arg in (z, z_span)):
             self.lum.set('z', z)
             self.lum.set('z span', z_span)
-        elif all(isinstance(arg, (int,float)) for arg in (z_min, z_max)):
+        elif all(isinstance(arg, float) for arg in (z_min, z_max)):
             self.lum.set('z min', z_min)
             self.lum.set('z max', z_max)
         else:
             raise ValueError('Input parameters <z>, <z_span>, <z_min>, <z_max> are not given.')
             
-    def _draw_3D_box(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None):
+    def _draw_3D_box(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None):
         """
         Helper function for drawing a 3D region.
         """
@@ -78,7 +78,7 @@ class LumericalBase():
         self._set_y_coords(y=y, y_span=y_span, y_min=y_min, y_max=y_max)
         self._set_z_coords(z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         
-    def _draw_2D_box_x(self, x:float, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None):
+    def _draw_2D_box_x(self, x:float, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None):
         """
         Helper function for drawing a 2D box normal to the x-axis.
         """
@@ -86,7 +86,7 @@ class LumericalBase():
         self._set_y_coords(y=y, y_span=y_span, y_min=y_min, y_max=y_max)
         self._set_z_coords(z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         
-    def _draw_2D_box_y(self, y:float, x=None, x_span=None, x_min=None, x_max=None, z=None, z_span=None, z_min=None, z_max=None):
+    def _draw_2D_box_y(self, y:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None):
         """
         Helper function for drawing a 2D box normal to the y-axis.
         """ 
@@ -94,7 +94,7 @@ class LumericalBase():
         self.lum.set('y', y)
         self._set_z_coords(z=z, z_span=z_span, z_min=z_min, z_max=z_max)
         
-    def _draw_2D_box_z(self, z:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None):
+    def _draw_2D_box_z(self, z:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None):
         """
         Helper function for drawing a 2D box normal to the z-axis.
         """     
@@ -102,7 +102,7 @@ class LumericalBase():
         self._set_y_coords(y=y, y_span=y_span, y_min=y_min, y_max=y_max)
         self.lum.set('z', z)
 
-    def add_rect(self, material, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, mesh_order=2, name='Rectangle', alpha=0.5):
+    def add_rect(self, material:float|str, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, mesh_order=2, name='Rectangle', alpha=0.5):
         """
         Adds a rectangle object in the simulation.
 
@@ -132,7 +132,7 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
-    def add_circle(self, x:float, y:float, radius:float, axis:str, theta:float, material, z=None, z_span=None, z_min=None, z_max=None, mesh_order=2, name='Circle', alpha=0.5):
+    def add_circle(self, x:float, y:float, radius:float, axis:str, theta:float, material:float|str, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, mesh_order=2, name='Circle', alpha=0.5):
         """
         Adds a cylinder object in the simulation.
 
@@ -170,7 +170,7 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
-    def add_ring(self, x:float, y:float, r_out:float, r_in:float, material, z=None, z_span=None, z_min=None, z_max=None, mesh_order=2, name='Ring', alpha=0.5):
+    def add_ring(self, x:float, y:float, r_out:float, r_in:float, material:float|str, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, mesh_order=2, name='Ring', alpha=0.5):
         """
         Adds a ring object in the simulation.
 
@@ -188,6 +188,11 @@ class LumericalBase():
             Object name.
         alpha : float, optional
             Object render opacity.
+
+        Raises
+        ----------
+        ValueError
+            `r_out` is less than or equal to `r_in`.
         """
         self.lum.addring()
         self.lum.set('name', name)
@@ -208,7 +213,7 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
-    def add_poly(self, x:float, y:float, vertices, material, z=None, z_span=None, z_min=None, z_max=None, mesh_order=2, name='Polygon', alpha=0.5):
+    def add_poly(self, x:float, y:float, vertices:np.ndarray[float], material:float|str, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, mesh_order=2, name='Polygon', alpha=0.5):
         """
         Adds a polygon object in the simulation.
 
@@ -240,7 +245,7 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
-    def add_mesh(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, dx=None, dy=None, dz=None, structure=None, name='Mesh'):
+    def add_mesh(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, dx:float=None, dy:float=None, dz:float=None, structure:str=None, name='Mesh'):
         """
         Adds a mesh override to a specific area or structure in the simulation.
 
@@ -286,7 +291,7 @@ class LumericalBase():
             self.lum.set('override z mesh', True)
             self.lum.set('dz', dz)
 
-    def add_index_monitor(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', name='Index Monitor'):
+    def add_index_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Index Monitor'):
         """
         Adds an index monitor.
 
@@ -342,7 +347,7 @@ class LumericalFDTD(LumericalBase):
                 raise ValueError('Input parameter <modes> must be a numpy ndarray containing only integers (numpy int32). At least one value is a non-integer.')
             self.lum.set('selected mode number', modes)
 
-    def add_fdtd_3D(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, background_material=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='PML', z_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
+    def add_fdtd_3D(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, background_material=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='PML', z_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
         """
         Adds a 3D FDTD simulation region.
 
@@ -388,7 +393,7 @@ class LumericalFDTD(LumericalBase):
         # Mesh Settings
         self.lum.set('mesh accuracy', mesh_accuracy)
 
-    def add_fdtd_2D(self, z:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, background_material=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
+    def add_fdtd_2D(self, z:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, background_material=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
         """
         Adds a 2D FDTD simulation area.
 
@@ -454,7 +459,7 @@ class LumericalFDTD(LumericalBase):
         self.lum.setglobalmonitor('wavelength span', wl_span)
         self.lum.setglobalmonitor('frequency points', num_pts)
 
-    def add_power_monitor(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', name='Power Monitor'):
+    def add_power_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Power Monitor'):
         """
         Adds a field and power monitor in the simulation.
 
@@ -491,7 +496,7 @@ class LumericalFDTD(LumericalBase):
         else:
             raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
 
-    def add_expansion_monitor(self, center_wl:float, wl_span:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', mode_selection='fundamental mode', modes=np.array([1]), num_pts=21, name='Expansion Monitor'):
+    def add_expansion_monitor(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', mode_selection='fundamental mode', modes=np.array([1]), num_pts=21, name='Expansion Monitor'):
         """
         Adds a mode expansion monitor in the simulation.
 
@@ -563,7 +568,7 @@ class LumericalFDTD(LumericalBase):
         self.lum.select(expansion_monitor)
         self.lum.setexpansion(port, power_monitor)
 
-    def add_movie_monitor(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', name='Movie Monitor'):
+    def add_movie_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Movie Monitor'):
         """
         Adds a movie monitor.
 
@@ -600,7 +605,7 @@ class LumericalFDTD(LumericalBase):
         else:
             raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
 
-    def add_mode(self, center_wl:float, wl_span:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, axis='x-axis', direction='forward', mode_selection='fundamental mode', modes=np.array([1])):
+    def add_mode(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, axis='x-axis', direction='forward', mode_selection='fundamental mode', modes=np.array([1])):
         """
         Adds a mode source in the simulation. Depending on the injection axis, 
         the span along that axis will be disabled.
@@ -650,7 +655,7 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('center wavelength', center_wl)
         self.lum.set('wavelength span', wl_span)
 
-    def add_gaussian(self, center_wl:float, wl_span:float, radius:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, angle=0.0, axis='x', direction='forward', polarization_angle=0.0, distance=0.0):
+    def add_gaussian(self, center_wl:float, wl_span:float, radius:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, angle=0.0, axis='x', direction='forward', polarization_angle=0.0, distance=0.0):
         """
         Adds a Gaussian source. Uses waist radius.
 
@@ -714,7 +719,7 @@ class LumericalMODE(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
-    def add_fde(self, wl:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, x_min_bc='Metal', x_max_bc='Metal', y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal', solver_type='2D X normal', num_modes=4):
+    def add_fde(self, wl:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, x_min_bc='Metal', x_max_bc='Metal', y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal', solver_type='2D X normal', num_modes=4):
         """
         Adds a Finite Difference Eigenmode (FDE) solver region in the simulation.
         """
@@ -755,7 +760,7 @@ class LumericalMODE(LumericalBase):
         self.lum.setanalysis('wavelength', wl)
         self.lum.setanalysis('number of trial modes', num_modes)
 
-    def add_varfdtd(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, simulation_time=1000e-15, x0=0.0, y0=0.0, index_method='variational', polarization='E mode (TE)', mesh_accuracy=2, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='Metal', z_max_bc='Metal'):
+    def add_varfdtd(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, simulation_time=1000e-15, x0=0.0, y0=0.0, index_method='variational', polarization='E mode (TE)', mesh_accuracy=2, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='Metal', z_max_bc='Metal'):
         """
         Adds a 2.5D FDTD (varFDTD) solver region.
         """
@@ -787,7 +792,7 @@ class LumericalMODE(LumericalBase):
         self.lum.set('z min bc', z_min_bc)
         self.lum.set('z max bc', z_max_bc)
 
-    def add_eme_3D(self, x_min:float, wl:float, group_spans:np.ndarray, num_cells:np.ndarray, subcell_methods:np.ndarray, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, num_modes=10, temperature=300, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
+    def add_eme_3D(self, x_min:float, wl:float, group_spans:np.ndarray[float], num_cells:np.ndarray, subcell_methods:np.ndarray, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, num_modes=10, temperature=300, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
         """
         Adds an Eigenmode Expansion (EME) solver region in the simulation.
 
@@ -851,7 +856,7 @@ class LumericalMODE(LumericalBase):
         
         self.lum.createbeam()
 
-    def add_mode_source(self, center_wl:float, wl_span:float, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, axis='x-axis', direction='forward'):
+    def add_mode_source(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, axis='x-axis', direction='forward'):
         """
         Adds a mode source in the simulation. Works for varFDTD.
 
@@ -892,7 +897,7 @@ class LumericalMODE(LumericalBase):
         self.lum.set('wavelength span', wl_span)
 
 
-    def add_eme_profile_monitor(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', name='Profile Monitor'):
+    def add_eme_profile_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Profile Monitor'):
         """
         Adds a profile monitor for an EME solver region.
         """
@@ -922,7 +927,7 @@ class LumericalMODE(LumericalBase):
         else:
             raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
         
-    def add_power_monitor(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D X-normal', name='Power Monitor'):
+    def add_power_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Power Monitor'):
         """
         Adds a field and power monitor in the simulation.
 
@@ -974,7 +979,7 @@ class LumericalCHARGE(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
-    def add_3D_charge(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, name='CHARGE Region'):
+    def add_3D_charge(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, name='CHARGE Region'):
         """
         Adds a 3D CHARGE solver region.
         """
@@ -990,7 +995,7 @@ class LumericalCHARGE(LumericalBase):
             y=y, y_span=y_span, y_min=y_min, y_max=y_max,
             z=z, z_span=z_span, z_min=z_min, z_max=z_max)
     
-    def add_2d_charge(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, dimension='2D X-Normal', name='CHARGE Region'):
+    def add_2d_charge(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, dimension='2D X-Normal', name='CHARGE Region'):
         """
         Adds a 2D CHARGE solver region.
         """
@@ -1036,7 +1041,7 @@ class LumericalCHARGE(LumericalBase):
         self.lum.set('temperature dependence', temperature_dependence)
         self.lum.set('simulation temperature', temperature)
 
-    def add_charge_monitor(self, x=None, x_span=None, x_min=None, x_max=None, y=None, y_span=None, y_min=None, y_max=None, z=None, z_span=None, z_min=None, z_max=None, monitor_type='2D x-normal', name='Charge Monitor'):
+    def add_charge_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D x-normal', name='Charge Monitor'):
         """
         Adds a CHARGE monitor.
         """
