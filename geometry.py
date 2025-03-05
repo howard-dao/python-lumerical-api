@@ -155,7 +155,7 @@ def _thicken(x:np.ndarray, y:np.ndarray, theta:np.ndarray, width:float) -> np.nd
 
     return vertices
 
-def _stitch(*args) -> np.ndarray[float]:
+def _stitch(*args, fraction:float=0.5) -> np.ndarray[float]:
     """
     Stitches two or more shapes together.
 
@@ -163,7 +163,8 @@ def _stitch(*args) -> np.ndarray[float]:
     ----------
     args
         Vertices for all shapes to be stitched together.
-
+    fraction : float, optional
+        Fraction of shape to be stitched.
     Returns
     ----------
     vertices : ndarray
@@ -177,6 +178,8 @@ def _stitch(*args) -> np.ndarray[float]:
         At least one of the arguments is not an N-by-2 ndarray.
     ValueError
         Only one shape was given.
+    ValueError
+        `fraction` is outside range (0,1).
     """
     if any(not isinstance(arg, np.ndarray) for arg in args):
         raise TypeError('At least 1 of the arguments is not an array of points.')
@@ -184,20 +187,22 @@ def _stitch(*args) -> np.ndarray[float]:
         raise ValueError('At least 1 of the arguments is not a set of (x,y) data.')
     if len(args) == 1:
         raise ValueError('Need at least 2 sets of vertices. Given only 1.')
+    if fraction >= 1 or fraction <= 0:
+        raise ValueError(f'Input parameter <fraction> must be between 0 and 1. It was given {fraction}.')
 
     x = np.array([])
     y = np.array([])
 
     for idx, arg in enumerate(args):
         num_pts = len(arg[:,0])
-        half_num_pts = int(num_pts/2)
+        half_num_pts = int(num_pts * fraction)
 
         x = np.hstack((x, arg[:half_num_pts,0]))
         y = np.hstack((y, arg[:half_num_pts,1]))
 
     for idx, arg in enumerate(args[::-1]):
         num_pts = len(arg[:,0])
-        half_num_pts = int(num_pts/2)
+        half_num_pts = int(num_pts * fraction)
 
         x = np.hstack((x, arg[half_num_pts:,0]))
         y = np.hstack((y, arg[half_num_pts:,1]))
