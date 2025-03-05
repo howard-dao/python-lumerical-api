@@ -7,7 +7,7 @@ import numpy as np
 from scipy.integrate import odeint
 import copy
 
-def _translate(vertices:np.ndarray, dx=0, dy=0) -> np.ndarray[float]:
+def _translate(vertices:np.ndarray, dx:float=0.0, dy:float=0.0) -> np.ndarray[float]:
     """
     Translates vertices along either x and y directions.
 
@@ -54,7 +54,7 @@ def _reflect(vertices:np.ndarray, angle:float) -> np.ndarray[float]:
 
     return new_vertices
 
-def _rotate(vertices:np.ndarray, angle:float, origin=(0,0)) -> np.ndarray[float]:
+def _rotate(vertices:np.ndarray, angle:float, origin:tuple[float,float]=(0.0,0.0)) -> np.ndarray[float]:
     """
     Rotates a shape counterclockwise about an origin point.
 
@@ -64,7 +64,7 @@ def _rotate(vertices:np.ndarray, angle:float, origin=(0,0)) -> np.ndarray[float]
         Shape vertices.
     angle : float
         Angle of rotation in degrees.
-    origin : [1-by-2] array-like
+    origin : [1-by-2] tuple
         Point about which to rotate.
 
     Returns
@@ -206,7 +206,7 @@ def _stitch(*args) -> np.ndarray[float]:
 
     return vertices
 
-def _circular_curve(radius:float, angle_range:float, angle_start=0.0, direction='counterclockwise', num_pts=100) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _circular_curve(radius:float, angle_range:float, angle_start:float=0.0, direction:str='counterclockwise', num_pts:int=100) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Helper function to create a circular curve.
 
@@ -271,7 +271,7 @@ def _clothoid_ode_rhs(state:np.ndarray, t:np.ndarray, kappa0:float, kappa1:float
     x, y, theta = state[0], state[1], state[2]
     return np.array([np.cos(theta), np.sin(theta), kappa0 + kappa1*t])
 
-def _euler_curve(min_radius:float, angle_range:float, angle_start=0.0, num_pts=100) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _euler_curve(min_radius:float, angle_range:float, angle_start:float=0.0, num_pts:int=100) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Helper function to create an Euler curve.
 

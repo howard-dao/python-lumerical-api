@@ -9,6 +9,8 @@ from scipy.constants import electron_volt
 class LumericalBase():
     def __init__(self, lum) -> None:
         self.lum = lum
+        self.objects = []
+        self.monitors = []
     
     def _match_material(self, material:float|str):
         """
@@ -170,6 +172,9 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
+        # Add to list of objects
+        self.objects.append(name)
+
     def add_ring(self, x:float, y:float, r_out:float, r_in:float, material:float|str, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, mesh_order=2, name='Ring', alpha=0.5):
         """
         Adds a ring object in the simulation.
@@ -213,13 +218,16 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
+        # Add to list of objects
+        self.objects.append(name)
+
     def add_poly(self, x:float, y:float, vertices:np.ndarray[float], material:float|str, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, mesh_order=2, name='Polygon', alpha=0.5):
         """
         Adds a polygon object in the simulation.
 
         Parameters
         ----------
-        vertices : [N-by-2] array
+        vertices : [N-by-2] ndarray
             Vertices defining polygon shape.
         material : float or str
             If float, sets material index; if string, sets material to library material.
@@ -245,6 +253,9 @@ class LumericalBase():
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
 
+        # Add to list of objects
+        self.objects.append(name)
+
     def add_mesh(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, dx:float=None, dy:float=None, dz:float=None, structure:str=None, name='Mesh'):
         """
         Adds a mesh override to a specific area or structure in the simulation.
@@ -258,7 +269,7 @@ class LumericalBase():
         dz : float, optional
             z discretization in meters.
         structure : str, optional
-            Simulation object on which to apply mesh override.
+            Simulation object on which to apply mesh override. Must be exactly equal to the name of the object whose mesh is being overridden.
         name : str, optional
             Mesh override name.
         """
@@ -273,10 +284,9 @@ class LumericalBase():
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max, 
                 z=z, z_span=z_span, z_min=z_min, z_max=z_max)
 
-        # If <structure> is specified as a string, override the mesh of the structure.
-        # This only takes effect if <structure> is exactly equal to the name of the object
-        # that's being overridden, not the name of the mesh itself.
         if isinstance(structure, str):
+            if structure not in self.objects:
+                raise ValueError('Input parameter <structure> does not match the names of any objects in simulation.')
             self.lum.set('based on a structure', True)
             self.lum.set('structure', structure)
 
@@ -326,6 +336,9 @@ class LumericalBase():
         else:
             raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
 
+        # Add monitor to list
+        self.monitors.append(name)
+
 class LumericalFDTD(LumericalBase):
     """
     Class for FDTD simulation.
@@ -333,7 +346,7 @@ class LumericalFDTD(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
-    def _mode_select(self, mode_selection='fundamental mode', modes=None):
+    def _mode_select(self, mode_selection='fundamental mode', modes:np.ndarray[int]=None):
         """
         Helper function for selecting modes.
         """
@@ -353,7 +366,7 @@ class LumericalFDTD(LumericalBase):
 
         Parameters
         ----------
-        background_material : str or float
+        background_material : float or str
             If float, sets material index; if string, sets material to library material.
         mesh_accuracy : int, optional
             Mesh resolution.
@@ -366,13 +379,13 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('dimension', '3D')
         self.lum.set('simulation time', simulation_time)
         match background_material:
+            case int() | float():
+                self.lum.set('index', background_material)
             case str():
                 if self.lum.materialexists(background_material):
                     self.lum.set('background material', background_material)
                 else:
                     raise ValueError('Input parameter <background_material> does not match any material in database.')
-            case int() | float():
-                self.lum.set('index', background_material)
             case _:
                 raise TypeError('Input parameter <background_material> must be either a string, integer, or float.')
 
@@ -393,7 +406,7 @@ class LumericalFDTD(LumericalBase):
         # Mesh Settings
         self.lum.set('mesh accuracy', mesh_accuracy)
 
-    def add_fdtd_2D(self, z:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, background_material=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
+    def add_fdtd_2D(self, z:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, background_material:float|str=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
         """
         Adds a 2D FDTD simulation area.
 
@@ -435,7 +448,7 @@ class LumericalFDTD(LumericalBase):
         # Mesh Settings
         self.lum.set('mesh accuracy', mesh_accuracy)
 
-    def set_global_monitors(self, center_wl:float, wl_span:float, use_wl_spacing=True, num_pts=21):
+    def set_global_monitors(self, center_wl:float, wl_span:float=0.0, use_wl_spacing=True, num_pts=21):
         """
         Set global monitor settings.
 
@@ -496,6 +509,9 @@ class LumericalFDTD(LumericalBase):
         else:
             raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
 
+        # Add monitor to list
+        self.monitors.append(name)
+
     def add_expansion_monitor(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', mode_selection='fundamental mode', modes=np.array([1]), num_pts=21, name='Expansion Monitor'):
         """
         Adds a mode expansion monitor in the simulation.
@@ -552,6 +568,9 @@ class LumericalFDTD(LumericalBase):
 
         self.lum.set('frequency points', num_pts)
 
+        # Add monitor to list
+        self.monitors.append(name)
+
     def set_expansion(self, expansion_monitor:str, power_monitor:str, port='port'):
         """
         Associates a power monitor with a mode expansion monitor.
@@ -565,6 +584,10 @@ class LumericalFDTD(LumericalBase):
         port : str, optional
             Name of expansion port from which data is collected.
         """
+        if expansion_monitor not in self.monitors:
+            raise ValueError('Input parameter <expansion_monitor> not found in simulation.')
+        if power_monitor not in self.monitors:
+            raise ValueError('Input parameter <power_monitor> not found in simulation.')
         self.lum.select(expansion_monitor)
         self.lum.setexpansion(port, power_monitor)
 
@@ -604,6 +627,9 @@ class LumericalFDTD(LumericalBase):
                 z=z)
         else:
             raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
+
+        # Add monitor to list
+        self.monitors.append(name)
 
     def add_mode(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, axis='x-axis', direction='forward', mode_selection='fundamental mode', modes=np.array([1])):
         """
@@ -896,7 +922,6 @@ class LumericalMODE(LumericalBase):
         self.lum.set('center wavelength', center_wl)
         self.lum.set('wavelength span', wl_span)
 
-
     def add_eme_profile_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Profile Monitor'):
         """
         Adds a profile monitor for an EME solver region.
@@ -926,6 +951,9 @@ class LumericalMODE(LumericalBase):
                 z=z)
         else:
             raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
+
+        # Add monitor to list
+        self.monitors.append(name)
         
     def add_power_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Power Monitor'):
         """
@@ -963,6 +991,9 @@ class LumericalMODE(LumericalBase):
                 z=z)
         else:
             raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
+
+        # Add monitor to list
+        self.monitors.append(name)
         
 
 class LumericalHEAT(LumericalBase):
@@ -1069,6 +1100,9 @@ class LumericalCHARGE(LumericalBase):
                 z=z)
         else:
             raise ValueError(f'Input parameter <monitor_type> must be either "2D x-normal", "2D y-normal", or "2D z-normal". It was given "{monitor_type}".')
+
+        # Add monitor to list
+        self.monitors.append(name)
         
     def get_capacitance(self, monitor_name:str):
         """
