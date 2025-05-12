@@ -33,6 +33,27 @@ class LumericalBase():
             case _:
                 raise TypeError('Input parameter <material> must be either a string, integer, or float.')
             
+    def _set_background_material(self, material:float|str):
+        """
+        Matches the given material to Lumerical's database and assigns it to the background.
+        If a number, set the background's refractive index instead.
+
+        Parameters
+        ----------
+        material : float or str
+            Name or refractive index of the material.
+        """
+        match material:
+            case int() | float():
+                self.lum.set('index', material)
+            case str():
+                if self.lum.materialexists(material):
+                    self.lum.set('background material', material)
+                else:
+                    raise ValueError('Input parameter <material> does not match any material in database.')
+            case _:
+                raise TypeError('Input parameter <material> must be either a string, integer, or float.')
+            
     def _set_x_coords(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None):
         """
         Helper function for setting either the (x, x span) or (x min, x max).
@@ -133,6 +154,9 @@ class LumericalBase():
         self.lum.set('alpha', alpha)
         self.lum.set('override mesh order from material database', True)
         self.lum.set('mesh order', mesh_order)
+
+        # Add to list of objects
+        self.objects.append(name)
 
     def add_circle(self, x:float, y:float, radius:float, axis:str, theta:float, material:float|str, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, mesh_order=2, name='Circle', alpha=0.5):
         """
@@ -448,7 +472,7 @@ class LumericalFDTD(LumericalBase):
         # Mesh Settings
         self.lum.set('mesh accuracy', mesh_accuracy)
 
-    def set_global_monitors(self, center_wl:float, wl_span:float=0.0, use_wl_spacing=True, num_pts=21):
+    def set_global_monitors(self, center_wl:float, wl_span=0.0, use_wl_spacing=True, num_pts=21):
         """
         Set global monitor settings.
 
@@ -737,6 +761,44 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('use scalar approximation', True)
         self.lum.set('waist radius w0', radius)
         self.lum.set('distance from waist', distance)
+
+def get_index(self, monitor_name:str='Index Monitor') -> tuple[np.ndarray[float], np.ndarray[float], np.ndarray[float], np.ndarray[float]]:
+    """
+    Returns information from index monitor.
+
+    Parameters
+    ----------
+    monitor_name : str, optional
+        Index monitor name.
+
+    Returns
+    ----------
+    x : ndarray
+        x data.
+    y : ndarray
+        y data.
+    z : ndarray
+        z data.
+    N : ndarray
+        Real part of refractive index.
+    """
+    self.lum.select(monitor_name)
+    results = self.lum.getresult(monitor_name, 'index')
+    x = results['x']
+    y = results['y']
+    z = results['z']
+
+    monitor_type = self.lum.get('monitor type')
+    if monitor_type == '2D X-normal':
+        N = np.real(results['index_x'][0,:,:,0])
+    elif monitor_type == '2D Y-normal':
+        N = np.real(results['index_x'][:,0,:,0])
+    elif monitor_type == '2D Z-normal':
+        N = np.real(results['index_x'][:,:,0,0])
+    else:
+        print('3D index feature not fully implemented.')
+        N = np.real(results['index_x'][:,:,:,0])
+    return x, y, z, N
     
 class LumericalMODE(LumericalBase):
     """
@@ -745,14 +807,17 @@ class LumericalMODE(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
-    def add_fde(self, wl:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, x_min_bc='Metal', x_max_bc='Metal', y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal', solver_type='2D X normal', num_modes=4):
+    def add_fde(self, wl:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, x_min_bc='Metal', x_max_bc='Metal', y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal', solver_type='2D X normal', background_material:float|str=1.0, num_modes=4):
         """
         Adds a Finite Difference Eigenmode (FDE) solver region in the simulation.
         """
         self.lum.addfde()
 
-        # Geometry
+        # General
         self.lum.set('solver type', solver_type)
+        self._set_background_material(material=background_material)
+
+        # Geometry
         if solver_type == '2D X normal':
             self._draw_2D_box_x(
                 x=x,
@@ -786,7 +851,7 @@ class LumericalMODE(LumericalBase):
         self.lum.setanalysis('wavelength', wl)
         self.lum.setanalysis('number of trial modes', num_modes)
 
-    def add_varfdtd(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, simulation_time=1000e-15, x0=0.0, y0=0.0, index_method='variational', polarization='E mode (TE)', mesh_accuracy=2, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='Metal', z_max_bc='Metal'):
+    def add_varfdtd(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, simulation_time=1000e-15, background_material:float|str=1.0, x0=0.0, y0=0.0, index_method='variational', polarization='E mode (TE)', mesh_accuracy=2, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='Metal', z_max_bc='Metal'):
         """
         Adds a 2.5D FDTD (varFDTD) solver region.
         """
@@ -794,6 +859,7 @@ class LumericalMODE(LumericalBase):
 
         # General
         self.lum.set('simulation time', simulation_time)
+        self._set_background_material(material=background_material)
 
         # Geometry
         self._draw_3D_box(
@@ -818,7 +884,7 @@ class LumericalMODE(LumericalBase):
         self.lum.set('z min bc', z_min_bc)
         self.lum.set('z max bc', z_max_bc)
 
-    def add_eme_3D(self, x_min:float, wl:float, group_spans:np.ndarray[float], num_cells:np.ndarray, subcell_methods:np.ndarray, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, num_modes=10, temperature=300, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
+    def add_eme_3D(self, x_min:float, wl:float, group_spans:np.ndarray[float], num_cells:np.ndarray, subcell_methods:np.ndarray, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, num_modes=10, temperature=300, background_material:float|str=1.0, y_min_bc='Metal', y_max_bc='Metal', z_min_bc='Metal', z_max_bc='Metal'):
         """
         Adds an Eigenmode Expansion (EME) solver region in the simulation.
 
@@ -836,8 +902,11 @@ class LumericalMODE(LumericalBase):
             Simulation temperature in Kelvin.
         """
         self.lum.addeme()
+
+        # General
         self.lum.set('simulation temperature', temperature)
         self.lum.set('solver type', '3D: X Prop')
+        self.lum.set('background material', background_material)
         self.lum.set('wavelength', wl)
 
         # Cell group definition
@@ -905,15 +974,11 @@ class LumericalMODE(LumericalBase):
 
         # Geometry
         if axis == 'x-axis':
-            self._draw_2D_box_x(
-                x=x,
-                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
-                z=None, z_span=None, z_min=None, z_max=None)
+            self.lum.set('x', x)      
+            self._set_y_coords(y=y, y_span=y_span, y_min=y_min, y_max=y_max)
         elif axis == 'y-axis':
-            self._draw_2D_box_y(
-                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-                y=y,
-                z=None, z_span=None, z_min=None, z_max=None)
+            self._set_x_coords(x=x, x_span=x_span, x_min=x_min, x_max=x_max)
+            self.lum.set('y', y)
         else:
             raise ValueError(f'Input parameter <axis> must be either "x-axis" or "y-axis". It was given "{axis}".')
 
