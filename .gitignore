@@ -10,3 +10,7 @@
 
 # ignore .gds files
 *.gds
+
+# ignore .fsp files
+*.fsp
+*.log
