@@ -1,5 +1,5 @@
 """
-Python module containing various shapes for photonic paths.
+Python module containing basic functions for shape generation.
 Author(s): Howard Dao
 """
 
@@ -95,7 +95,7 @@ def _mirror(x:np.ndarray, y:np.ndarray, axis:str) -> np.ndarray[float]:
     y : ndarray
         y data.
     axis : str
-        Direction in which to mirror vertices.
+        Direction in which to mirror vertices. Must be either "x" or "y".
 
     Returns
     ----------
@@ -116,7 +116,7 @@ def _mirror(x:np.ndarray, y:np.ndarray, axis:str) -> np.ndarray[float]:
         v2 = np.vstack((x,-y)).T
         v2 = v2[::-1]
     else:
-        raise ValueError(f'Input parameter <axis> is neither "x" or "y". It was given {axis}.')
+        raise ValueError(f'Input parameter <axis> is neither "x" or "y". It was given "{axis}".')
     vertices = np.vstack((v1,v2))
 
     return vertices
@@ -195,17 +195,17 @@ def _stitch(*args, fraction:float=0.5) -> np.ndarray[float]:
 
     for idx, arg in enumerate(args):
         num_pts = len(arg[:,0])
-        half_num_pts = int(num_pts * fraction)
+        frac_num_pts = int(num_pts * fraction)
 
-        x = np.hstack((x, arg[:half_num_pts,0]))
-        y = np.hstack((y, arg[:half_num_pts,1]))
+        x = np.hstack((x, arg[:frac_num_pts,0]))
+        y = np.hstack((y, arg[:frac_num_pts,1]))
 
     for idx, arg in enumerate(args[::-1]):
         num_pts = len(arg[:,0])
-        half_num_pts = int(num_pts * fraction)
+        frac_num_pts = int(num_pts * fraction)
 
-        x = np.hstack((x, arg[half_num_pts:,0]))
-        y = np.hstack((y, arg[half_num_pts:,1]))
+        x = np.hstack((x, arg[frac_num_pts:,0]))
+        y = np.hstack((y, arg[frac_num_pts:,1]))
 
     vertices = np.vstack((x,y)).T
 
