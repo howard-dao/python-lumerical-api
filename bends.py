@@ -251,6 +251,49 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0.0,
 
     return vertices
 
+def euler_s_curve(rad2dy:float, theta_max:float, span:float, length=None, reflect=False, num_pts=100):
+    if theta_max <= 0 or theta_max > 90:
+        raise ValueError(f'Input parameter <theta_max> must be between 0 and 90 degrees. It was given {theta_max} degrees.')
+
+    min_radius = rad2dy * span/2
+
+    # First part of curve before turning point
+    x1, y1, theta1 = _euler_curve(
+        min_radius=min_radius,
+        angle_range=theta_max,
+        num_pts=int(num_pts/2))
+
+    # Last part of curve after turning point
+    x2, y2, theta2 = -x1[::-1], -y1[::-1], theta1[::-1]
+
+    dx = 2 * x1[-1]
+    dy = 2 * y1[-1]
+
+    x2 = x2 + dx
+    y2 = y2 + dy
+
+    # Combine first and last parts
+    xt = np.hstack((x1, x2))
+    yt = np.hstack((y1, y2))
+    theta = np.hstack((theta1, theta2))
+
+    # If <length> is given, scale along x axis
+    if isinstance(length, (int,float)):
+        x_error = length / dx
+        xt *= x_error
+
+    # Since rad2dy is calculated via curve-fitting, correct for the error in the y coordinates by scaling.
+    y_error = span / yt[-1]
+    yt *= y_error
+
+    vertices = np.vstack((xt,yt)).T
+
+    # Flip upside down if true
+    if reflect:
+        vertices = _reflect(vertices=vertices, angle=0)
+
+    return vertices
+
 def euler_s_bend(width:float, rad2dy:float, theta_max:float, span:float, length=None, reflect=False, num_pts=100):
     """
     Generates an Euler S-bend.
