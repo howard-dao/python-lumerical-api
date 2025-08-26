@@ -121,33 +121,70 @@ def _mirror(x:np.ndarray, y:np.ndarray, axis:str) -> np.ndarray[float]:
 
     return vertices
 
-def _thicken(x:np.ndarray, y:np.ndarray, theta:np.ndarray, width:float) -> np.ndarray[float]:
+def _thicken(curve:np.ndarray, width:float, angle_start:float, angle_final:float):
     """
     Adds width to a curve.
 
     Parameters
     ----------
-    x : ndarray
-        x data.
-    y : ndarray
-        y data.
-    theta : ndarray
-        Angle of the line tangent to the curve, in degrees.
+    curve : ndarray
+        Curve data.
     width : float
         Path width.
+    angle_start : float
+        Start angle.
+    angle_final : float
+        Final angle.
 
     Returns
     ----------
     vertices : ndarray
         Shape vertices.
     """
-    theta = np.deg2rad(theta)
+    if width <= 0:
+        raise ValueError('Input parameter <width> must be greater than zero.')
+    
+    x0 = curve[:,0]
+    y0 = curve[:,1]
 
-    x1 = x + (width/2)*np.cos(theta + np.pi/2)
-    y1 = y + (width/2)*np.sin(theta + np.pi/2)
+    theta = np.zeros(x0.shape)
+    for idx in range(len(theta)-2):
+        # Backward vector
+        dx_backward = x0[idx] - x0[idx+1]
+        dy_backward = y0[idx] - y0[idx+1]
+        v_backward = np.array([dx_backward, dy_backward])
+        magnitude_backward = np.linalg.norm(v_backward)
+        phi_backward = np.arctan2(dy_backward, dx_backward)
+        if phi_backward < 0:
+            phi_backward += 2*np.pi
 
-    x2 = x + (width/2)*np.cos(theta - np.pi/2)
-    y2 = y + (width/2)*np.sin(theta - np.pi/2)
+        # Forward vector
+        dx_forward = x0[idx+2] - x0[idx+1]
+        dy_forward = y0[idx+2] - y0[idx+1]
+        v_forward = np.array([dx_forward, dy_forward])
+        magnitude_forward = np.linalg.norm(v_forward)
+        phi_forward = np.arctan2(dy_forward, dx_forward)
+        if phi_forward < 0:
+            phi_forward += 2*np.pi
+
+        dot_product = np.dot(v_backward, v_forward)
+
+        # Difference between forward and backward vectors (in radians)
+        a = dot_product / (magnitude_backward*magnitude_forward)
+        a = np.max([-1,a])
+        a = np.min([1,a])
+        angular_difference = np.arccos(a)
+
+        theta[idx+1] = phi_forward + angular_difference/2 - np.pi/2
+
+    theta[0] = np.deg2rad(angle_start)
+    theta[-1] = np.deg2rad(angle_final)
+
+    x1 = x0 + (width/2)*np.cos(theta + np.pi/2)
+    y1 = y0 + (width/2)*np.sin(theta + np.pi/2)
+
+    x2 = x0 + (width/2)*np.cos(theta - np.pi/2)
+    y2 = y0 + (width/2)*np.sin(theta - np.pi/2)
 
     x = np.hstack((x1, x2[::-1]))
     y = np.hstack((y1, y2[::-1]))
@@ -255,8 +292,10 @@ def _circular_curve(radius:float, angle_range:float, angle_start:float=0.0, dire
         x = x2
         y = y2
         theta = np.pi + 2*np.deg2rad(angle_start) - theta
+    
+    vertices = np.vstack((x,y)).T
 
-    return x, y, np.rad2deg(theta)
+    return vertices, np.rad2deg(theta)
 
 def _clothoid_ode_rhs(state:np.ndarray, t:np.ndarray, kappa0:float, kappa1:float):
     """
@@ -315,4 +354,6 @@ def _euler_curve(min_radius:float, angle_range:float, angle_start:float=0.0, num
 
     x, y, theta = sol[:,0], sol[:,1], sol[:,2]
 
-    return x, y, np.rad2deg(theta)
+    curve = np.vstack((x,y)).T
+
+    return curve, np.rad2deg(theta)
