@@ -245,7 +245,7 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0.0,
     if direction != 'clockwise' and direction != 'counterclockwise':
         raise ValueError('Input parameter <direction> must be either "clockwise" or "counterclockwise".')
 
-    curve, theta = _euler_curve(
+    curve, _ = _euler_curve(
         min_radius=min_radius,
         angle_range=angle_range, 
         angle_start=angle_start,
@@ -263,7 +263,7 @@ def euler_arc(width:float, min_radius:float, angle_range:float, angle_start=0.0,
 
     return vertices
 
-def euler_s_bend(rad2dy:float, theta_max:float, span:float, width=0.0, length:int|float=None, reflect=False, num_pts=100):
+def euler_s_bend(rad2dy:float, theta_max:float, span_y:int|float, span_x:int|float=None, width=0.0, reflect=False, num_pts=100):
     """
     Generates an Euler S-bend.
 
@@ -273,12 +273,12 @@ def euler_s_bend(rad2dy:float, theta_max:float, span:float, width=0.0, length:in
         Ratio between minimum bend radius to vertical displacement.
     theta_max : float
         Maximum angle made by bend in degrees. Occurs at the turning point.
-    span : float
+    span_y : int or float
         Transverse distance between input and output.
+    span_x : int or float, optional
+        Longitudinal distance between input and output.
     width : float, optional
         Path width. If given a value of zero, returns the vertices of a curve.
-    length : int or float, optional
-        Longitudinal distance between input and output. 
     reflect : bool, optional
         Whether to reflect over longitudinal axis.
     num_pts : int, optional
@@ -293,17 +293,17 @@ def euler_s_bend(rad2dy:float, theta_max:float, span:float, width=0.0, length:in
         raise ValueError(f'Input parameter <theta_max> must be between 0 and 90 degrees. It was given {theta_max} degrees.')
 
     # Generate curve
-    min_radius = rad2dy * span/2
+    min_radius = rad2dy * span_y/2
 
     # First part of curve before turning point
-    curve1, theta1 = _euler_curve(
+    curve1, _ = _euler_curve(
         min_radius=min_radius,
         angle_range=theta_max,
         num_pts=int(num_pts/2))
     x1, y1 = curve1[:,0], curve1[:,1]
 
     # Last part of curve after turning point
-    x2, y2, theta2 = -x1[-2::-1], -y1[-2::-1], theta1[-2::-1]
+    x2, y2 = -x1[-2::-1], -y1[-2::-1]
 
     dx = 2 * x1[-1]
     dy = 2 * y1[-1]
@@ -314,15 +314,14 @@ def euler_s_bend(rad2dy:float, theta_max:float, span:float, width=0.0, length:in
     # Combine first and last parts
     xt = np.hstack((x1, x2))
     yt = np.hstack((y1, y2))
-    theta = np.hstack((theta1, theta2))
 
     # If <length> is given, scale along x axis
-    if isinstance(length, (int,float)):
-        x_error = length / dx
+    if isinstance(span_x, (int,float)):
+        x_error = span_x / dx
         xt *= x_error
 
     # Since rad2dy is calculated via curve-fitting, correct for the error in the y coordinates by scaling.
-    y_error = span / yt[-1]
+    y_error = span_y / yt[-1]
     yt *= y_error
 
     vertices = np.vstack((xt,yt)).T
@@ -399,7 +398,7 @@ def euler_u_bend(span:float, width=0.0, direction='counterclockwise', num_pts=10
 
     return vertices
 
-def euler_l_bend(min_radius:float, width=0.0, span=None, direction='counterclockwise', num_pts=100):
+def euler_l_bend(min_radius:float, width=0.0, radius:float=None, direction='counterclockwise', num_pts=100):
     """
     Generates an Euler 90 degree bend.
 
@@ -409,6 +408,8 @@ def euler_l_bend(min_radius:float, width=0.0, span=None, direction='counterclock
         Minimum radius of curvature.
     width : float, optional
         Path width. If given a value of zero, returns the vertices of a curve.
+    radius : float, optional
+        Effective radius equivalent to a circular bend.
     direction : str, optional
         Either "clockwise" or "counterclockwise".
     num_pts : int
@@ -430,7 +431,7 @@ def euler_l_bend(min_radius:float, width=0.0, span=None, direction='counterclock
         num_pts += 1
 
     # First half
-    curve1, theta1 = _euler_curve(
+    curve1, _ = _euler_curve(
         min_radius=min_radius, 
         angle_range=45, 
         num_pts=int(num_pts/2))
@@ -453,15 +454,11 @@ def euler_l_bend(min_radius:float, width=0.0, span=None, direction='counterclock
     # Combine both halves
     curve = np.vstack((curve1, curve2))
     xt, yt = curve[:,0], curve[:,1]
-
-    # Calculate angles
-    theta2 = 90 - theta1[::-1]
-    theta = np.hstack((theta1, theta2))
     
     # Resize if <span> is given
-    if isinstance(span, (int, float)):
-        x_error = span / xt[-1]
-        y_error = span / yt[-1]
+    if isinstance(radius, (int, float)):
+        x_error = radius / xt[-1]
+        y_error = radius / yt[-1]
         xt *= x_error
         yt *= y_error
 

@@ -132,9 +132,9 @@ def _thicken(curve:np.ndarray, width:float, angle_start:float, angle_final:float
     width : float
         Path width.
     angle_start : float
-        Start angle.
+        Start angle in degrees.
     angle_final : float
-        Final angle.
+        Final angle in degrees.
 
     Returns
     ----------

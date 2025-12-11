@@ -66,18 +66,13 @@ def circular_racetrack(width:float, radius:float, length:float, num_pts=100) -> 
     ubend2 = _rotate(vertices=ubend2, angle=180)
     ubend2 = _translate(vertices=ubend2, dx=-length/2, dy=2*radius)
     
-    str_wg1 = np.array([
+    str_wg = np.array([
         [-length/2, width/2],
         [length/2, width/2],
         [length/2, -width/2],
         [-length/2, -width/2]])
-    str_wg2 = np.array([
-        [length/2, -width/2+2*radius],
-        [-length/2, -width/2+2*radius],
-        [-length/2, width/2+2*radius],
-        [length/2, width/2+2*radius]])
-    
-    vertices = _stitch(str_wg1, ubend1, str_wg2, ubend2)
+
+    vertices = _stitch(str_wg, ubend1, ubend2)
 
     return vertices
 
@@ -116,17 +111,12 @@ def euler_racetrack(width:float, span:float, length:float, num_pts=100) -> np.nd
     ubend2 = _rotate(vertices=ubend2, angle=180)
     ubend2 = _translate(vertices=ubend2, dx=-length/2, dy=span)
 
-    str_wg1 = np.array([
+    str_wg = np.array([
         [-length/2, width/2],
         [length/2, width/2],
         [length/2, -width/2],
         [-length/2, -width/2]])
-    str_wg2 = np.array([
-        [length/2, -width/2+span],
-        [-length/2, -width/2+span],
-        [-length/2, width/2+span],
-        [length/2, width/2+span]])
-    
-    vertices = _stitch(str_wg1, ubend1, str_wg2, ubend2)
+
+    vertices = _stitch(str_wg, ubend1, ubend2)
 
     return vertices

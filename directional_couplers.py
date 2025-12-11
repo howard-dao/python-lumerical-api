@@ -50,18 +50,12 @@ def circular_directional_coupler(width:float, radius:float, span:float, coupling
         num_pts=int(num_pts/2))
     
     bend_length = max(sbend1[:,0]) - min(sbend1[:,0])
-
-    str_wg = np.array([
-        [bend_length, -span-width/2],
-        [bend_length+coupling_length, -span-width/2],
-        [bend_length+coupling_length, -span+width/2],
-        [bend_length, -span+width/2]])
     
     sbend2 = _reflect(vertices=sbend1, angle=0)
     sbend2 = _translate(vertices=sbend2, dx=bend_length+coupling_length, dy=-span)
     sbend2 = np.flipud(sbend2)
 
-    verts1 = _stitch(sbend1, str_wg, sbend2)
+    verts1 = _stitch(sbend1, sbend2)
     verts2 = _reflect(vertices=verts1, angle=0)
     verts2 = _translate(vertices=verts2, dy=-2*span-gap)
 
@@ -107,23 +101,17 @@ def euler_directional_coupler(width:float, span:float, theta_max:float, coupling
         width=width,
         rad2dy=1.0,
         theta_max=theta_max,
-        span=span,
+        span_y=span,
         reflect=True,
         num_pts=num_pts)
     
     bend_length = max(sbend1[:,0]) - min(sbend1[:,0])
-
-    str_wg = np.array([
-        [bend_length, -span-width/2],
-        [bend_length+coupling_length, -span-width/2],
-        [bend_length+coupling_length, -span+width/2],
-        [bend_length, -span+width/2]])
     
     sbend2 = _reflect(vertices=sbend1, angle=0)
     sbend2 = _translate(vertices=sbend2, dx=bend_length+coupling_length, dy=-span)
     sbend2 = np.flipud(sbend2)
 
-    verts1 = _stitch(sbend1, str_wg, sbend2)
+    verts1 = _stitch(sbend1, sbend2)
     verts2 = _reflect(vertices=verts1, angle=0)
     verts2 = _translate(vertices=verts2, dy=-2*span-gap)
 
