@@ -496,6 +496,43 @@ class LumericalFDTD(LumericalBase):
         self.lum.setglobalmonitor('wavelength span', wl_span)
         self.lum.setglobalmonitor('frequency points', num_pts)
 
+    def add_power_1D(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='Linear X', name='Power Monitor'):
+        """
+        Adds a 1D field and power monitor in the simulation.
+
+        Parameters
+        ----------
+        monitor_type : str, optional
+            Monitor orientation.
+        name : str, optional
+            Monitor name.
+        """
+        self.lum.addpower()
+
+        # General
+        self.lum.set('name', name)
+
+        # Geometry
+        self.lum.set('monitor type', monitor_type)
+
+        if monitor_type == 'Linear X':
+            self._set_x_coords(x=x, x_span=x_span, x_min=x_min, x_max=x_max)
+            self.lum.set('y', y)
+            self.lum.set('z', z)
+        elif monitor_type == 'Linear Y':
+            self.lum.set('x', x)
+            self._set_y_coords(y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+            self.lum.set('z', z)
+        elif monitor_type == 'Linear Z':
+            self.lum.set('x', x)
+            self.lum.set('y', y)
+            self._set_z_coords(z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        else:
+            raise ValueError(f'Input parameter <monitor_type> must be either "Linear X", "Linear Y", or "Linear Z". It was given "{monitor_type}".')
+
+        # Add monitor to list
+        self.monitors.append(name)
+
     def add_power_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Power Monitor'):
         """
         Adds a field and power monitor in the simulation.
@@ -536,7 +573,7 @@ class LumericalFDTD(LumericalBase):
         # Add monitor to list
         self.monitors.append(name)
 
-    def add_expansion_monitor(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', mode_selection='fundamental mode', modes=np.array([1]), num_pts=21, name='Expansion Monitor'):
+    def add_mode_expansion(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', mode_selection='fundamental mode', modes=np.array([1]), num_pts:int=21, theta:float=0.0, rotation_offset:float=0.0, name='Expansion Monitor'):
         """
         Adds a mode expansion monitor in the simulation.
 
@@ -550,6 +587,10 @@ class LumericalFDTD(LumericalBase):
             Numpy array of mode numbers, all of which must be integers.
         num_pts : int, optional
             Number of wavelength points.
+        theta : float, optional
+            Rotation in degrees.
+        rotation_offset : float, optional
+            Offset along rotional axis in meters.
         name : str, optional
             Monitor name.
         """
@@ -591,6 +632,9 @@ class LumericalFDTD(LumericalBase):
             self.lum.set('wavelength span', wl_span)
 
         self.lum.set('frequency points', num_pts)
+
+        self.lum.set('theta', theta)
+        self.lum.set('rotation offset', rotation_offset)
 
         # Add monitor to list
         self.monitors.append(name)
@@ -655,7 +699,7 @@ class LumericalFDTD(LumericalBase):
         # Add monitor to list
         self.monitors.append(name)
 
-    def add_mode(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, axis='x-axis', direction='forward', mode_selection='fundamental mode', modes=np.array([1])):
+    def add_mode(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, axis='x-axis', direction='forward', mode_selection='fundamental mode', modes=np.array([1]), theta:float=0.0, rotation_offset:float=0.0):
         """
         Adds a mode source in the simulation. Depending on the injection axis, 
         the span along that axis will be disabled.
@@ -674,6 +718,10 @@ class LumericalFDTD(LumericalBase):
             Either "fundamental mode" or "user select".
         modes : ndarray, optional
             Numpy array of mode numbers, all of which must be integers.
+        theta : float, optional
+            Rotation in degrees.
+        rotation_offset : float, optional
+            Offset along rotional axis in meters.
         """
         self.lum.addmode()
 
@@ -681,6 +729,8 @@ class LumericalFDTD(LumericalBase):
         self.lum.set('injection axis', axis)
         self.lum.set('direction', direction)
         self._mode_select(mode_selection=mode_selection, modes=modes)
+        self.lum.set('theta', theta)
+        self.lum.set('rotation offset', rotation_offset)
 
         # Geometry
         if axis == 'x-axis':
