@@ -151,7 +151,7 @@ def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, length=None, 
     # First part of curve before turning point
     span1 = abs(w0/2 - w1/2)
     min_radius1 = alpha * span1 * rad2dy
-    x1, y1, _ = _euler_curve(
+    curve1, _ = _euler_curve(
         min_radius=min_radius1, 
         angle_range=theta_max, 
         num_pts=int(num_pts/2))
@@ -159,11 +159,13 @@ def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, length=None, 
     # Last part of curve after turning point
     span2 = abs(w0 - w1) - span1
     min_radius2 = (1-alpha) * span2 * rad2dy
-    x2, y2, _ = _euler_curve(
+    curve2, _ = _euler_curve(
         min_radius=min_radius2, 
         angle_range=theta_max,
         num_pts=int(num_pts/2))
     
+    x1, y1 = curve1[:,0], curve1[:,1]
+    x2, y2 = curve2[:,0], curve2[:,1]
     length_total = abs(x1[0] - x1[-1]) + abs(x2[0] - x2[-1])
     span_total = abs(y1[0] - y1[-1]) + abs(y2[0] - y2[-1])
 

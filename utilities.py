@@ -380,9 +380,10 @@ class LumericalFDTD(LumericalBase):
             raise ValueError(f'Input parameter <mode_selection> must be one of the following strings: "fundamental mode", "fundamental TE mode", "fundamental TM mode", or "user select". It was given "{mode_selection}".')
         self.lum.set('mode selection', mode_selection)
         if mode_selection == 'user select' and isinstance(modes, np.ndarray):
-            if any(not isinstance(mode_item, np.int32) for mode_item in modes):
-                raise ValueError('Input parameter <modes> must be a numpy ndarray containing only integers (numpy int32). At least one value is a non-integer.')
-            self.lum.set('selected mode number', modes)
+            try:
+                self.lum.set('selected mode number', modes)
+            except:
+                self.lum.set('selected mode numbers', modes)
 
     def add_fdtd_3D(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, background_material=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='PML', z_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
         """
@@ -472,7 +473,21 @@ class LumericalFDTD(LumericalBase):
         # Mesh Settings
         self.lum.set('mesh accuracy', mesh_accuracy)
 
-    def set_global_monitors(self, center_wl:float, wl_span=0.0, use_wl_spacing=True, num_pts=21):
+    def set_global_source(self, center_wl:float, wl_span:float=0.0):
+        """
+        Set global source  settings.
+
+        Parameters
+        ----------
+        center_wl : float
+            Center wavelength in meters.
+        wl-span : float, optional
+            Wavelength span in meters.
+        """
+        self.lum.setglobalsource('center wavelength', center_wl)
+        self.lum.setglobalsource('wavelength span', wl_span)
+
+    def set_global_monitors(self, center_wl:float, wl_span:float=0.0, use_wl_spacing=True, num_pts=21):
         """
         Set global monitor settings.
 
@@ -507,7 +522,7 @@ class LumericalFDTD(LumericalBase):
         name : str, optional
             Monitor name.
         """
-        self.lum.addpower()
+        self.lum.adddftmonitor()
 
         # General
         self.lum.set('name', name)
@@ -544,7 +559,7 @@ class LumericalFDTD(LumericalBase):
         name : str, optional
             Monitor name.
         """
-        self.lum.addpower()
+        self.lum.adddftmonitor()
 
         # General
         self.lum.set('name', name)
@@ -573,7 +588,7 @@ class LumericalFDTD(LumericalBase):
         # Add monitor to list
         self.monitors.append(name)
 
-    def add_mode_expansion(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', mode_selection='fundamental mode', modes=np.array([1]), num_pts:int=21, theta:float=0.0, rotation_offset:float=0.0, name='Expansion Monitor'):
+    def add_mode_expansion(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', override_global_settings:bool=False, mode_selection='fundamental mode', modes=np.array([1]), num_pts:int=21, theta:float=0.0, rotation_offset:float=0.0, name='Expansion Monitor'):
         """
         Adds a mode expansion monitor in the simulation.
 
@@ -623,15 +638,17 @@ class LumericalFDTD(LumericalBase):
         # Mode expansion
         self._mode_select(mode_selection=mode_selection, modes=modes)
         
-        self.lum.set('override global monitor settings', True)
-        self.lum.set('use wavelength spacing', True)
+        self.lum.set('override global monitor settings', override_global_settings)
+        
+        if override_global_settings:
+            self.lum.set('use wavelength spacing', True)
 
-        using_source = self.lum.get('use source limits')
-        if not using_source:
-            self.lum.set('center wavelength', center_wl)
-            self.lum.set('wavelength span', wl_span)
+            using_source = self.lum.get('use source limits')
+            if not using_source:
+                self.lum.set('center wavelength', center_wl)
+                self.lum.set('wavelength span', wl_span)
 
-        self.lum.set('frequency points', num_pts)
+            self.lum.set('frequency points', num_pts)
 
         self.lum.set('theta', theta)
         self.lum.set('rotation offset', rotation_offset)
@@ -699,7 +716,7 @@ class LumericalFDTD(LumericalBase):
         # Add monitor to list
         self.monitors.append(name)
 
-    def add_mode(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, axis='x-axis', direction='forward', mode_selection='fundamental mode', modes=np.array([1]), theta:float=0.0, rotation_offset:float=0.0):
+    def add_mode(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, axis='x-axis', direction='forward', override_global_settings:bool=False, mode_selection='fundamental mode', modes=np.array([1]), theta:float=0.0, rotation_offset:float=0.0):
         """
         Adds a mode source in the simulation. Depending on the injection axis, 
         the span along that axis will be disabled.
@@ -752,8 +769,10 @@ class LumericalFDTD(LumericalBase):
             raise ValueError(f'Input parameter <axis> must be either "x-axis", "y-axis", or "z-axis". It was given "{axis}".')
 
         # Frequency/Wavelength
-        self.lum.set('center wavelength', center_wl)
-        self.lum.set('wavelength span', wl_span)
+        self.lum.set('override global source settings', override_global_settings)
+        if override_global_settings:
+            self.lum.set('center wavelength', center_wl)
+            self.lum.set('wavelength span', wl_span)
 
     def add_gaussian(self, center_wl:float, wl_span:float, radius:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, angle=0.0, axis='x', direction='forward', polarization_angle=0.0, distance=0.0):
         """
