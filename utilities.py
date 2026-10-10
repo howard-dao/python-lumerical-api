@@ -548,7 +548,7 @@ class LumericalFDTD(LumericalBase):
         # Add monitor to list
         self.monitors.append(name)
 
-    def add_power_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Power Monitor'):
+    def add_power_2D(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Power Monitor'):
         """
         Adds a field and power monitor in the simulation.
 
@@ -676,7 +676,7 @@ class LumericalFDTD(LumericalBase):
         self.lum.select(expansion_monitor)
         self.lum.setexpansion(port, power_monitor)
 
-    def add_movie_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Movie Monitor'):
+    def add_movie(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Movie Monitor'):
         """
         Adds a movie monitor.
 
@@ -1056,7 +1056,7 @@ class LumericalMODE(LumericalBase):
         self.lum.set('center wavelength', center_wl)
         self.lum.set('wavelength span', wl_span)
 
-    def add_eme_profile_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Profile Monitor'):
+    def add_eme_profile(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Profile Monitor'):
         """
         Adds a profile monitor for an EME solver region.
         """
@@ -1088,8 +1088,157 @@ class LumericalMODE(LumericalBase):
 
         # Add monitor to list
         self.monitors.append(name)
+
+    def add_mode_expansion(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', override_global_settings:bool=False, mode_selection='fundamental mode', modes=np.array([1]), num_pts:int=21, theta:float=0.0, rotation_offset:float=0.0, name='Expansion Monitor'):
+        """
+        Adds a mode expansion monitor in the simulation.
+
+        Parameters
+        ----------
+        monitor_type : str, optional
+            Monitor orientation.
+        mode_selection : str, optional
+            Either "fundamental mode" or "user select".
+        modes : ndarray, optional
+            Numpy array of mode numbers, all of which must be integers.
+        num_pts : int, optional
+            Number of wavelength points.
+        theta : float, optional
+            Rotation in degrees.
+        rotation_offset : float, optional
+            Offset along rotional axis in meters.
+        name : str, optional
+            Monitor name.
+        """
+        self.lum.addmodeexpansion()
+
+        # General
+        self.lum.set('name', name)
+
+        # Geometry
+        self.lum.set('monitor type', monitor_type)
+
+        if monitor_type == '2D X-normal':
+            self._draw_2D_box_x(
+                x=x,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Y-normal':
+            self._draw_2D_box_y(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Z-normal':
+            self._draw_2D_box_z(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z)
+        else:
+            raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
+
+        # Mode expansion
+        self._mode_select(mode_selection=mode_selection, modes=modes)
         
-    def add_power_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Power Monitor'):
+        self.lum.set('override global monitor settings', override_global_settings)
+        
+        if override_global_settings:
+            self.lum.set('use wavelength spacing', True)
+
+            using_source = self.lum.get('use source limits')
+            if not using_source:
+                self.lum.set('center wavelength', center_wl)
+                self.lum.set('wavelength span', wl_span)
+
+            self.lum.set('frequency points', num_pts)
+
+        self.lum.set('theta', theta)
+        self.lum.set('rotation offset', rotation_offset)
+
+        # Add monitor to list
+        self.monitors.append(name)
+
+    def add_mode_expansion_varfdtd(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='Linear X', override_global_settings:bool=False, mode_selection='fundamental mode', modes=np.array([1]), num_pts:int=21, theta:float=0.0, rotation_offset:float=0.0, name='Expansion Monitor'):
+        """
+        Adds a mode expansion monitor in the simulation.
+
+        Parameters
+        ----------
+        monitor_type : str, optional
+            Monitor orientation.
+        mode_selection : str, optional
+            Either "fundamental mode" or "user select".
+        modes : ndarray, optional
+            Numpy array of mode numbers, all of which must be integers.
+        num_pts : int, optional
+            Number of wavelength points.
+        theta : float, optional
+            Rotation in degrees.
+        rotation_offset : float, optional
+            Offset along rotional axis in meters.
+        name : str, optional
+            Monitor name.
+        """
+        self.lum.addmodeexpansion()
+
+        # General
+        self.lum.set('name', name)
+
+        # Geometry
+        self.lum.set('monitor type', monitor_type)
+
+        if monitor_type == 'Linear X':
+            self._set_x_coords(x=x, x_span=x_span, x_min=x_min, x_max=x_max)
+            self.lum.set('y', y)
+            self.lum.set('z', z)
+        elif monitor_type == 'Linear Y':
+            self.lum.set('x', x)
+            self._set_y_coords(y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+            self.lum.set('z', z)
+        else:
+            raise ValueError(f'Input parameter <monitor_type> must be either "Linear X" pr "Linear Y". It was given "{monitor_type}".')
+
+        # Mode expansion
+        # self._mode_select(mode_selection=mode_selection, modes=modes)
+        
+        self.lum.set('override global monitor settings', override_global_settings)
+        
+        if override_global_settings:
+            self.lum.set('use wavelength spacing', True)
+
+            using_source = self.lum.get('use source limits')
+            if not using_source:
+                self.lum.set('center wavelength', center_wl)
+                self.lum.set('wavelength span', wl_span)
+
+            self.lum.set('frequency points', num_pts)
+
+        self.lum.set('theta', theta)
+        self.lum.set('rotation offset', rotation_offset)
+
+        # Add monitor to list
+        self.monitors.append(name)
+
+    def set_expansion(self, expansion_monitor:str, power_monitor:str, port='port'):
+        """
+        Associates a power monitor with a mode expansion monitor.
+
+        Parameters
+        ----------
+        expansion_monitor : str
+            Name of the expansion monitor, must exist in the simulation.
+        power_monitor : str
+            Name of the DFT monitor, must exist in the simulation.
+        port : str, optional
+            Name of expansion port from which data is collected.
+        """
+        if expansion_monitor not in self.monitors:
+            raise ValueError('Input parameter <expansion_monitor> not found in simulation.')
+        if power_monitor not in self.monitors:
+            raise ValueError('Input parameter <power_monitor> not found in simulation.')
+        self.lum.select(expansion_monitor)
+        self.lum.setexpansion(port, power_monitor)
+    
+    def add_power(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Power Monitor'):
         """
         Adds a field and power monitor in the simulation.
 
@@ -1100,7 +1249,7 @@ class LumericalMODE(LumericalBase):
         name : str, optional
             Monitor name.
         """
-        self.lum.addpower()
+        self.lum.adddftmonitor()
 
         # General
         self.lum.set('name', name)
@@ -1128,6 +1277,44 @@ class LumericalMODE(LumericalBase):
 
         # Add monitor to list
         self.monitors.append(name)
+
+    def set_global_source(self, center_wl:float, wl_span:float=0.0):
+            """
+            Set global source  settings.
+    
+            Parameters
+            ----------
+            center_wl : float
+                Center wavelength in meters.
+            wl-span : float, optional
+                Wavelength span in meters.
+            """
+            self.lum.setglobalsource('center wavelength', center_wl)
+            self.lum.setglobalsource('wavelength span', wl_span)
+    
+    def set_global_monitors(self, center_wl:float, wl_span:float=0.0, use_wl_spacing=True, num_pts=21):
+        """
+        Set global monitor settings.
+
+        Parameters
+        ----------
+        center_wl : float
+            Center wavelength in meters.
+        wl_span : float
+            Wavelength span in meters.
+        use_wl_spacing : bool, optional
+            True for equal wavelength intervals. False for equal frequency intervals.
+        num_pts : int, optional
+            Number of wavelength points.
+        """
+        if use_wl_spacing:
+            self.lum.setglobalmonitor('use wavelength spacing', True)
+        else:
+            self.lum.setglobalmonitor('use wavelength spacing', False)
+            
+        self.lum.setglobalmonitor('wavelength center', center_wl)
+        self.lum.setglobalmonitor('wavelength span', wl_span)
+        self.lum.setglobalmonitor('frequency points', num_pts)
         
 
 class LumericalHEAT(LumericalBase):
