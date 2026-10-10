@@ -332,10 +332,8 @@ def _euler_curve(min_radius:float, angle_range:float, angle_start:float=0.0, num
 
     Returns
     ----------
-    x : ndarray
-        x data.
-    y : ndarray
-        y data.
+    curve : ndarray
+        (x,y) coordinates of the curve.
     theta : ndarray
         Angle of the line tangent to the curve, in degrees.
     """

@@ -108,7 +108,7 @@ def gaussian_taper(w0:float, w1:float, length:float, num_pts=100) -> np.ndarray[
     
     return vertices
 
-def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, length=None, alpha=0.5, num_pts=100) -> np.ndarray[float]:
+def euler_taper(w0:float, w1:float, theta_max:float, length=None, alpha=0.5, num_pts=100) -> np.ndarray[float]:
     """
     Generates vertices for Euler taper in clockwise order.
 
@@ -120,8 +120,6 @@ def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, length=None, 
         Width of the wide end of the taper. Must be greater than w0.
     theta_max : float
         Maximum taper half-angle in degrees. This angle occurs at the turning point.
-    rad2dy : float
-        Ratio between minimum bend radius to vertical displacement.
     length : int or float, optional
         Distance between both ends of the taper.
     alpha : float, optional
@@ -147,6 +145,7 @@ def euler_taper(w0:float, w1:float, theta_max:float, rad2dy:float, length=None, 
         raise ValueError('Input parameter <alpha> must be between 0 and 1.')
     if num_pts % 2 != 0:
         num_pts += 1
+    rad2dy = 1 # Dummy value
     
     # First part of curve before turning point
     span1 = abs(w0/2 - w1/2)
