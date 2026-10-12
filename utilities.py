@@ -325,7 +325,7 @@ class LumericalBase():
             self.lum.set('override z mesh', True)
             self.lum.set('dz', dz)
 
-    def add_index_monitor(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Index Monitor'):
+    def add_index(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Index Monitor'):
         """
         Adds an index monitor.
 
@@ -363,117 +363,11 @@ class LumericalBase():
         # Add monitor to list
         self.monitors.append(name)
 
-class LumericalFDTD(LumericalBase):
-    """
-    Class for FDTD simulation.
-    """
+class LumericalPHOTONIC(LumericalBase):
     def __init__(self, lum) -> None:
         super().__init__(lum)
 
-    def _mode_select(self, mode_selection='fundamental mode', modes:np.ndarray[int]=None):
-        """
-        Helper function for selecting modes.
-        """
-        settings = ('fundamental mode', 'fundamental TE mode', 'fundamental TM mode', 'user select')
-
-        if mode_selection not in settings:
-            raise ValueError(f'Input parameter <mode_selection> must be one of the following strings: "fundamental mode", "fundamental TE mode", "fundamental TM mode", or "user select". It was given "{mode_selection}".')
-        self.lum.set('mode selection', mode_selection)
-        if mode_selection == 'user select' and isinstance(modes, np.ndarray):
-            try:
-                self.lum.set('selected mode number', modes)
-            except:
-                self.lum.set('selected mode numbers', modes)
-
-    def add_fdtd_3D(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, background_material=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='PML', z_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
-        """
-        Adds a 3D FDTD simulation region.
-
-        Parameters
-        ----------
-        background_material : float or str
-            If float, sets material index; if string, sets material to library material.
-        mesh_accuracy : int, optional
-            Mesh resolution.
-        simulation_time : float, optional
-            Maximum duration of a simulation in seconds.
-        """
-        self.lum.addfdtd()
-
-        # General
-        self.lum.set('dimension', '3D')
-        self.lum.set('simulation time', simulation_time)
-        match background_material:
-            case int() | float():
-                self.lum.set('index', background_material)
-            case str():
-                if self.lum.materialexists(background_material):
-                    self.lum.set('background material', background_material)
-                else:
-                    raise ValueError('Input parameter <background_material> does not match any material in database.')
-            case _:
-                raise TypeError('Input parameter <background_material> must be either a string, integer, or float.')
-
-        # Geometry
-        self._draw_3D_box(
-            x=x, x_span=x_span, x_min=x_min, x_max=x_max, 
-            y=y, y_span=y_span, y_min=y_min, y_max=y_max, 
-            z=z, z_span=z_span, z_min=z_min, z_max=z_max)
-
-        # Boundary Conditions
-        self.lum.set('x min bc', x_min_bc)
-        self.lum.set('x max bc', x_max_bc)
-        self.lum.set('y min bc', y_min_bc)
-        self.lum.set('y max bc', y_max_bc)
-        self.lum.set('z min bc', z_min_bc)
-        self.lum.set('z max bc', z_max_bc)
-
-        # Mesh Settings
-        self.lum.set('mesh accuracy', mesh_accuracy)
-
-    def add_fdtd_2D(self, z:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, background_material:float|str=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
-        """
-        Adds a 2D FDTD simulation area.
-
-        Parameters
-        ----------
-        mesh_accuracy : int, optional
-            Mesh resolution.
-        simulation_time : float, optional
-            Maximum duration of a simulation in seconds.
-        """
-        self.lum.addfdtd()
-
-        # General
-        self.lum.set('dimension', '2D')
-        self.lum.set('simulation time', simulation_time)
-        match background_material:
-            case str():
-                if self.lum.materialexists(background_material):
-                    self.lum.set('background material', background_material)
-                else:
-                    raise ValueError('Input parameter <background_material> does not match any material in database.')
-            case int() | float():
-                self.lum.set('index', background_material)
-            case _:
-                raise TypeError('Input parameter <background_material> must be either a string, integer, or float.')
-
-        # Geometry
-        self._draw_2D_box_z(
-            x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-            y=y, y_span=y_span, y_min=y_min, y_max=y_max,
-            z=z)
-
-        # Boundary Conditions
-        self.lum.set('x min bc', x_min_bc)
-        self.lum.set('x max bc', x_max_bc)
-        self.lum.set('y min bc', y_min_bc)
-        self.lum.set('y max bc', y_max_bc)
-
-        # Mesh Settings
-        self.lum.set('mesh accuracy', mesh_accuracy)
-
-    def set_global_source(self, center_wl:float, wl_span:float=0.0):
+    def set_global_source(self, center_wl:float, wl_span:float=0.0) -> None:
         """
         Set global source  settings.
 
@@ -481,13 +375,13 @@ class LumericalFDTD(LumericalBase):
         ----------
         center_wl : float
             Center wavelength in meters.
-        wl-span : float, optional
+        wl_span : float, optional
             Wavelength span in meters.
         """
         self.lum.setglobalsource('center wavelength', center_wl)
         self.lum.setglobalsource('wavelength span', wl_span)
 
-    def set_global_monitors(self, center_wl:float, wl_span:float=0.0, use_wl_spacing=True, num_pts=21):
+    def set_global_monitor(self, center_wl:float, wl_span:float=0.0, use_wl_spacing=True, num_pts=21) -> None:
         """
         Set global monitor settings.
 
@@ -502,91 +396,10 @@ class LumericalFDTD(LumericalBase):
         num_pts : int, optional
             Number of wavelength points.
         """
-        if use_wl_spacing:
-            self.lum.setglobalmonitor('use wavelength spacing', True)
-        else:
-            self.lum.setglobalmonitor('use wavelength spacing', False)
-            
+        self.lum.setglobalmonitor('use wavelength spacing', use_wl_spacing)
         self.lum.setglobalmonitor('wavelength center', center_wl)
         self.lum.setglobalmonitor('wavelength span', wl_span)
         self.lum.setglobalmonitor('frequency points', num_pts)
-
-    def add_power_1D(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='Linear X', name='Power Monitor'):
-        """
-        Adds a 1D field and power monitor in the simulation.
-
-        Parameters
-        ----------
-        monitor_type : str, optional
-            Monitor orientation.
-        name : str, optional
-            Monitor name.
-        """
-        self.lum.adddftmonitor()
-
-        # General
-        self.lum.set('name', name)
-
-        # Geometry
-        self.lum.set('monitor type', monitor_type)
-
-        if monitor_type == 'Linear X':
-            self._set_x_coords(x=x, x_span=x_span, x_min=x_min, x_max=x_max)
-            self.lum.set('y', y)
-            self.lum.set('z', z)
-        elif monitor_type == 'Linear Y':
-            self.lum.set('x', x)
-            self._set_y_coords(y=y, y_span=y_span, y_min=y_min, y_max=y_max)
-            self.lum.set('z', z)
-        elif monitor_type == 'Linear Z':
-            self.lum.set('x', x)
-            self.lum.set('y', y)
-            self._set_z_coords(z=z, z_span=z_span, z_min=z_min, z_max=z_max)
-        else:
-            raise ValueError(f'Input parameter <monitor_type> must be either "Linear X", "Linear Y", or "Linear Z". It was given "{monitor_type}".')
-
-        # Add monitor to list
-        self.monitors.append(name)
-
-    def add_power_2D(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Power Monitor'):
-        """
-        Adds a field and power monitor in the simulation.
-
-        Parameters
-        ----------
-        monitor_type : str, optional
-            Monitor orientation.
-        name : str, optional
-            Monitor name.
-        """
-        self.lum.adddftmonitor()
-
-        # General
-        self.lum.set('name', name)
-
-        # Geometry
-        self.lum.set('monitor type', monitor_type)
-
-        if monitor_type == '2D X-normal':
-            self._draw_2D_box_x(
-                x=x,
-                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
-                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
-        elif monitor_type == '2D Y-normal':
-            self._draw_2D_box_y(
-                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-                y=y,
-                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
-        elif monitor_type == '2D Z-normal':
-            self._draw_2D_box_z(
-                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
-                z=z)
-        else:
-            raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
-
-        # Add monitor to list
-        self.monitors.append(name)
 
     def add_mode_expansion(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', override_global_settings:bool=False, mode_selection='fundamental mode', modes=np.array([1]), num_pts:int=21, theta:float=0.0, rotation_offset:float=0.0, name='Expansion Monitor'):
         """
@@ -616,7 +429,6 @@ class LumericalFDTD(LumericalBase):
 
         # Geometry
         self.lum.set('monitor type', monitor_type)
-
         if monitor_type == '2D X-normal':
             self._draw_2D_box_x(
                 x=x,
@@ -676,9 +488,9 @@ class LumericalFDTD(LumericalBase):
         self.lum.select(expansion_monitor)
         self.lum.setexpansion(port, power_monitor)
 
-    def add_movie(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Movie Monitor'):
+    def add_power_1D(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='Linear X', name='Power Monitor'):
         """
-        Adds a movie monitor.
+        Adds a 1D field and power monitor in the simulation.
 
         Parameters
         ----------
@@ -687,7 +499,7 @@ class LumericalFDTD(LumericalBase):
         name : str, optional
             Monitor name.
         """
-        self.lum.addmovie()
+        self.lum.adddftmonitor()
 
         # General
         self.lum.set('name', name)
@@ -695,6 +507,42 @@ class LumericalFDTD(LumericalBase):
         # Geometry
         self.lum.set('monitor type', monitor_type)
 
+        if monitor_type == 'Linear X':
+            self._set_x_coords(x=x, x_span=x_span, x_min=x_min, x_max=x_max)
+            self.lum.set('y', y)
+            self.lum.set('z', z)
+        elif monitor_type == 'Linear Y':
+            self.lum.set('x', x)
+            self._set_y_coords(y=y, y_span=y_span, y_min=y_min, y_max=y_max)
+            self.lum.set('z', z)
+        elif monitor_type == 'Linear Z':
+            self.lum.set('x', x)
+            self.lum.set('y', y)
+            self._set_z_coords(z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        else:
+            raise ValueError(f'Input parameter <monitor_type> must be either "Linear X", "Linear Y", or "Linear Z". It was given "{monitor_type}".')
+
+        # Add monitor to list
+        self.monitors.append(name)
+    
+    def add_power_2D(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Power Monitor'):
+        """
+        Adds a field and power monitor in the simulation.
+
+        Parameters
+        ----------
+        monitor_type : str, optional
+            Monitor orientation.
+        name : str, optional
+            Monitor name.
+        """
+        self.lum.adddftmonitor()
+
+        # General
+        self.lum.set('name', name)
+
+        # Geometry
+        self.lum.set('monitor type', monitor_type)
         if monitor_type == '2D X-normal':
             self._draw_2D_box_x(
                 x=x,
@@ -715,6 +563,139 @@ class LumericalFDTD(LumericalBase):
 
         # Add monitor to list
         self.monitors.append(name)
+
+    def add_movie(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Movie Monitor'):
+        """
+        Adds a movie monitor.
+
+        Parameters
+        ----------
+        monitor_type : str, optional
+            Monitor orientation.
+        name : str, optional
+            Monitor name.
+        """
+        self.lum.addmovie()
+
+        # General
+        self.lum.set('name', name)
+
+        # Geometry
+        self.lum.set('monitor type', monitor_type)
+        if monitor_type == '2D X-normal':
+            self._draw_2D_box_x(
+                x=x,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Y-normal':
+            self._draw_2D_box_y(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y,
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+        elif monitor_type == '2D Z-normal':
+            self._draw_2D_box_z(
+                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+                z=z)
+        else:
+            raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
+
+        # Add monitor to list
+        self.monitors.append(name)
+
+class LumericalFDTD(LumericalPHOTONIC):
+    """
+    Class for FDTD simulation.
+    """
+    def __init__(self, lum) -> None:
+        super().__init__(lum)
+
+    def _mode_select(self, mode_selection='fundamental mode', modes:np.ndarray[int]=None):
+        """
+        Helper function for selecting modes.
+        """
+        settings = ('fundamental mode', 'fundamental TE mode', 'fundamental TM mode', 'user select')
+
+        if mode_selection not in settings:
+            raise ValueError(f'Input parameter <mode_selection> must be one of the following strings: "fundamental mode", "fundamental TE mode", "fundamental TM mode", or "user select". It was given "{mode_selection}".')
+        self.lum.set('mode selection', mode_selection)
+        if mode_selection == 'user select' and isinstance(modes, np.ndarray):
+            try:
+                self.lum.set('selected mode number', modes)
+            except:
+                self.lum.set('selected mode numbers', modes)
+
+    def add_fdtd_3D(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, background_material=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', z_min_bc='PML', z_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
+        """
+        Adds a 3D FDTD simulation region.
+
+        Parameters
+        ----------
+        background_material : float or str
+            If float, sets material index; if string, sets material to library material.
+        mesh_accuracy : int, optional
+            Mesh resolution.
+        simulation_time : float, optional
+            Maximum duration of a simulation in seconds.
+        """
+        self.lum.addfdtd()
+
+        # General
+        self.lum.set('dimension', '3D')
+        self.lum.set('simulation time', simulation_time)
+        self._set_background_material(material=background_material)
+
+        # Geometry
+        self._draw_3D_box(
+            x=x, x_span=x_span, x_min=x_min, x_max=x_max, 
+            y=y, y_span=y_span, y_min=y_min, y_max=y_max, 
+            z=z, z_span=z_span, z_min=z_min, z_max=z_max
+        )
+
+        # Boundary Conditions
+        self.lum.set('x min bc', x_min_bc)
+        self.lum.set('x max bc', x_max_bc)
+        self.lum.set('y min bc', y_min_bc)
+        self.lum.set('y max bc', y_max_bc)
+        self.lum.set('z min bc', z_min_bc)
+        self.lum.set('z max bc', z_max_bc)
+
+        # Mesh Settings
+        self.lum.set('mesh accuracy', mesh_accuracy)
+
+    def add_fdtd_2D(self, z:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, background_material:float|str=1.0, x_min_bc='PML', x_max_bc='PML', y_min_bc='PML', y_max_bc='PML', mesh_accuracy=2, simulation_time=1000e-15):
+        """
+        Adds a 2D FDTD simulation area.
+
+        Parameters
+        ----------
+        mesh_accuracy : int, optional
+            Mesh resolution.
+        simulation_time : float, optional
+            Maximum duration of a simulation in seconds.
+        """
+        self.lum.addfdtd()
+
+        # General
+        self.lum.set('dimension', '2D')
+        self.lum.set('simulation time', simulation_time)
+        self._set_background_material(material=background_material)
+
+        # Geometry
+        self._draw_2D_box_z(
+            x=x, x_span=x_span, x_min=x_min, x_max=x_max,
+            y=y, y_span=y_span, y_min=y_min, y_max=y_max,
+            z=z
+        )
+
+        # Boundary Conditions
+        self.lum.set('x min bc', x_min_bc)
+        self.lum.set('x max bc', x_max_bc)
+        self.lum.set('y min bc', y_min_bc)
+        self.lum.set('y max bc', y_max_bc)
+
+        # Mesh Settings
+        self.lum.set('mesh accuracy', mesh_accuracy)
 
     def add_mode(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, axis='x-axis', direction='forward', override_global_settings:bool=False, mode_selection='fundamental mode', modes=np.array([1]), theta:float=0.0, rotation_offset:float=0.0):
         """
@@ -869,7 +850,7 @@ def get_index(self, monitor_name:str='Index Monitor') -> tuple[np.ndarray[float]
         N = np.real(results['index_x'][:,:,:,0])
     return x, y, z, N
     
-class LumericalMODE(LumericalBase):
+class LumericalMODE(LumericalPHOTONIC):
     """
     Class for FDE, EME, and varFDTD simulations.
     """
@@ -891,7 +872,8 @@ class LumericalMODE(LumericalBase):
             self._draw_2D_box_x(
                 x=x,
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
-                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max
+            )
             self.lum.set('y min bc', y_min_bc)
             self.lum.set('y max bc', y_max_bc)
             self.lum.set('z min bc', z_min_bc)
@@ -900,7 +882,8 @@ class LumericalMODE(LumericalBase):
             self._draw_2D_box_y(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
                 y=y,
-                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+                z=z, z_span=z_span, z_min=z_min, z_max=z_max
+            )
             self.lum.set('x min bc', x_min_bc)
             self.lum.set('x max bc', x_max_bc)
             self.lum.set('z min bc', z_min_bc)
@@ -909,7 +892,8 @@ class LumericalMODE(LumericalBase):
             self._draw_2D_box_z(
                 x=x, x_span=x_span, x_min=x_min, x_max=x_max,
                 y=y, y_span=y_span, y_min=y_min, y_max=y_max,
-                z=z)
+                z=z
+            )
             self.lum.set('x min bc', x_min_bc)
             self.lum.set('x max bc', x_max_bc)
             self.lum.set('y min bc', y_min_bc)
@@ -934,7 +918,8 @@ class LumericalMODE(LumericalBase):
         self._draw_3D_box(
             x=x, x_span=x_span, x_min=x_min, x_max=x_max, 
             y=y, y_span=y_span, y_min=y_min, y_max=y_max, 
-            z=z, z_span=z_span, z_min=z_min, z_max=z_max)
+            z=z, z_span=z_span, z_min=z_min, z_max=z_max
+        )
         
         # Effective index
         self.lum.set('x0', x0)
@@ -1067,7 +1052,6 @@ class LumericalMODE(LumericalBase):
 
         # Geometry
         self.lum.set('monitor type', monitor_type)
-
         if monitor_type == '2D X-normal':
             self._draw_2D_box_x(
                 x=x,
@@ -1085,74 +1069,6 @@ class LumericalMODE(LumericalBase):
                 z=z)
         else:
             raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
-
-        # Add monitor to list
-        self.monitors.append(name)
-
-    def add_mode_expansion(self, center_wl:float, wl_span:float, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', override_global_settings:bool=False, mode_selection='fundamental mode', modes=np.array([1]), num_pts:int=21, theta:float=0.0, rotation_offset:float=0.0, name='Expansion Monitor'):
-        """
-        Adds a mode expansion monitor in the simulation.
-
-        Parameters
-        ----------
-        monitor_type : str, optional
-            Monitor orientation.
-        mode_selection : str, optional
-            Either "fundamental mode" or "user select".
-        modes : ndarray, optional
-            Numpy array of mode numbers, all of which must be integers.
-        num_pts : int, optional
-            Number of wavelength points.
-        theta : float, optional
-            Rotation in degrees.
-        rotation_offset : float, optional
-            Offset along rotional axis in meters.
-        name : str, optional
-            Monitor name.
-        """
-        self.lum.addmodeexpansion()
-
-        # General
-        self.lum.set('name', name)
-
-        # Geometry
-        self.lum.set('monitor type', monitor_type)
-
-        if monitor_type == '2D X-normal':
-            self._draw_2D_box_x(
-                x=x,
-                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
-                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
-        elif monitor_type == '2D Y-normal':
-            self._draw_2D_box_y(
-                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-                y=y,
-                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
-        elif monitor_type == '2D Z-normal':
-            self._draw_2D_box_z(
-                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
-                z=z)
-        else:
-            raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
-
-        # Mode expansion
-        self._mode_select(mode_selection=mode_selection, modes=modes)
-        
-        self.lum.set('override global monitor settings', override_global_settings)
-        
-        if override_global_settings:
-            self.lum.set('use wavelength spacing', True)
-
-            using_source = self.lum.get('use source limits')
-            if not using_source:
-                self.lum.set('center wavelength', center_wl)
-                self.lum.set('wavelength span', wl_span)
-
-            self.lum.set('frequency points', num_pts)
-
-        self.lum.set('theta', theta)
-        self.lum.set('rotation offset', rotation_offset)
 
         # Add monitor to list
         self.monitors.append(name)
@@ -1185,7 +1101,6 @@ class LumericalMODE(LumericalBase):
 
         # Geometry
         self.lum.set('monitor type', monitor_type)
-
         if monitor_type == 'Linear X':
             self._set_x_coords(x=x, x_span=x_span, x_min=x_min, x_max=x_max)
             self.lum.set('y', y)
@@ -1217,105 +1132,6 @@ class LumericalMODE(LumericalBase):
 
         # Add monitor to list
         self.monitors.append(name)
-
-    def set_expansion(self, expansion_monitor:str, power_monitor:str, port='port'):
-        """
-        Associates a power monitor with a mode expansion monitor.
-
-        Parameters
-        ----------
-        expansion_monitor : str
-            Name of the expansion monitor, must exist in the simulation.
-        power_monitor : str
-            Name of the DFT monitor, must exist in the simulation.
-        port : str, optional
-            Name of expansion port from which data is collected.
-        """
-        if expansion_monitor not in self.monitors:
-            raise ValueError('Input parameter <expansion_monitor> not found in simulation.')
-        if power_monitor not in self.monitors:
-            raise ValueError('Input parameter <power_monitor> not found in simulation.')
-        self.lum.select(expansion_monitor)
-        self.lum.setexpansion(port, power_monitor)
-    
-    def add_power(self, x:float=None, x_span:float=None, x_min:float=None, x_max:float=None, y:float=None, y_span:float=None, y_min:float=None, y_max:float=None, z:float=None, z_span:float=None, z_min:float=None, z_max:float=None, monitor_type='2D X-normal', name='Power Monitor'):
-        """
-        Adds a field and power monitor in the simulation.
-
-        Parameters
-        ----------
-        monitor_type : str, optional
-            Monitor orientation.
-        name : str, optional
-            Monitor name.
-        """
-        self.lum.adddftmonitor()
-
-        # General
-        self.lum.set('name', name)
-
-        # Geometry
-        self.lum.set('monitor type', monitor_type)
-
-        if monitor_type == '2D X-normal':
-            self._draw_2D_box_x(
-                x=x,
-                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
-                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
-        elif monitor_type == '2D Y-normal':
-            self._draw_2D_box_y(
-                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-                y=y,
-                z=z, z_span=z_span, z_min=z_min, z_max=z_max)
-        elif monitor_type == '2D Z-normal':
-            self._draw_2D_box_z(
-                x=x, x_span=x_span, x_min=x_min, x_max=x_max,
-                y=y, y_span=y_span, y_min=y_min, y_max=y_max,
-                z=z)
-        else:
-            raise ValueError(f'Input parameter <monitor_type> must be either "2D X-normal", "2D Y-normal", or "2D Z-normal". It was given "{monitor_type}".')
-
-        # Add monitor to list
-        self.monitors.append(name)
-
-    def set_global_source(self, center_wl:float, wl_span:float=0.0):
-            """
-            Set global source  settings.
-    
-            Parameters
-            ----------
-            center_wl : float
-                Center wavelength in meters.
-            wl-span : float, optional
-                Wavelength span in meters.
-            """
-            self.lum.setglobalsource('center wavelength', center_wl)
-            self.lum.setglobalsource('wavelength span', wl_span)
-    
-    def set_global_monitors(self, center_wl:float, wl_span:float=0.0, use_wl_spacing=True, num_pts=21):
-        """
-        Set global monitor settings.
-
-        Parameters
-        ----------
-        center_wl : float
-            Center wavelength in meters.
-        wl_span : float
-            Wavelength span in meters.
-        use_wl_spacing : bool, optional
-            True for equal wavelength intervals. False for equal frequency intervals.
-        num_pts : int, optional
-            Number of wavelength points.
-        """
-        if use_wl_spacing:
-            self.lum.setglobalmonitor('use wavelength spacing', True)
-        else:
-            self.lum.setglobalmonitor('use wavelength spacing', False)
-            
-        self.lum.setglobalmonitor('wavelength center', center_wl)
-        self.lum.setglobalmonitor('wavelength span', wl_span)
-        self.lum.setglobalmonitor('frequency points', num_pts)
-        
 
 class LumericalHEAT(LumericalBase):
     """
